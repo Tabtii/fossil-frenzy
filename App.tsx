@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import HomeScreen from './src/screens/HomeScreen';
 import BattleScreen from './src/screens/BattleScreen';
+import FossilBookScreen from './src/screens/FossilBookScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -22,6 +23,7 @@ export default function App() {
       >
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Battle" component={BattleScreen} />
+        <Stack.Screen name="FossilBook" component={FossilBookScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

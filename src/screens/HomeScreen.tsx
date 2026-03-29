@@ -23,7 +23,10 @@ export default function HomeScreen() {
           <Text style={styles.menuButtonText}>🎮 Spielen</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuButtonSecondary}>
+        <TouchableOpacity 
+          style={styles.menuButtonSecondary}
+          onPress={() => (navigation as any).navigate('FossilBook')}
+        >
           <Text style={styles.menuButtonText}>📖 Fossilienbuch</Text>
         </TouchableOpacity>
 
