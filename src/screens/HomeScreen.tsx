@@ -1,52 +1,95 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { RunState } from '../types';
+import { createInitialRunState } from '../engine/gameEngine';
 
-export default function HomeScreen() {
-  const navigation = useNavigation();
+interface Props {
+  navigation: any;
+}
+
+export default function HomeScreen({ navigation }: Props) {
+  const [runState, setRunState] = useState<RunState | null>(null);
+
+  const startNewRun = () => {
+    const initialState = createInitialRunState();
+    setRunState(initialState);
+    // Navigate to map screen (we'll create this next)
+    console.log('Starting new run:', initialState);
+  };
 
   return (
     <View style={styles.container}>
-      {/* Title Section */}
-      <View style={styles.titleSection}>
-        <Text style={styles.dinoEmoji}>🦖⚔️🦕</Text>
-        <Text style={styles.title}>FOSSIL FRENZY</Text>
-        <Text style={styles.subtitle}>Dino Deckbuilder</Text>
-      </View>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Title */}
+        <View style={styles.header}>
+          <Text style={styles.emoji}>🦖</Text>
+          <Text style={styles.title}>DINO SPIRE</Text>
+          <Text style={styles.subtitle}>Ein Roguelike Deckbuilder</Text>
+        </View>
 
-      {/* Menu Buttons */}
-      <View style={styles.menu}>
-        <TouchableOpacity 
-          style={styles.menuButton}
-          onPress={() => (navigation as any).navigate('Battle')}
-        >
-          <Text style={styles.menuButtonText}>🎮 Spielen</Text>
-        </TouchableOpacity>
+        {/* Main Menu Buttons */}
+        <View style={styles.menuButtons}>
+          <TouchableOpacity 
+            style={[styles.button, styles.primaryButton]} 
+            onPress={startNewRun}
+          >
+            <Text style={styles.buttonEmoji}>⚔️</Text>
+            <Text style={styles.buttonText}>Neues Spiel</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.menuButtonSecondary}
-          onPress={() => (navigation as any).navigate('FossilBook')}
-        >
-          <Text style={styles.menuButtonText}>📖 Fossilienbuch</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={[styles.button, styles.secondaryButton]}>
+            <Text style={styles.buttonEmoji}>📖</Text>
+            <Text style={styles.buttonText}>Kartenbuch</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuButtonSecondary}>
-          <Text style={styles.menuButtonText}>🃏 Sammlung</Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity style={[styles.button, styles.secondaryButton]}>
+            <Text style={styles.buttonEmoji}>⚙️</Text>
+            <Text style={styles.buttonText}>Einstellungen</Text>
+          </TouchableOpacity>
+        </View>
 
-      {/* Info Section */}
-      <View style={styles.infoSection}>
-        <Text style={styles.infoText}>
-          Baue dein Deck aus dinosaurier-Karten{'\n'}
-          und besiege deine Gegner!
-        </Text>
-      </View>
+        {/* Stats Section */}
+        <View style={styles.statsSection}>
+          <Text style={styles.sectionTitle}>Statistiken</Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.statBox}>
+              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statLabel}>Siege</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statLabel}>Niederlagen</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statLabel}>Höchster Score</Text>
+            </View>
+          </View>
+        </View>
 
-      {/* Footer */}
-      <View style={styles.footer}>
-        <Text style={styles.version}>v0.1 Alpha</Text>
-      </View>
+        {/* Dino Collection Preview */}
+        <View style={styles.collectionSection}>
+          <Text style={styles.sectionTitle}>Deine Dinos</Text>
+          <View style={styles.dinoPreview}>
+            <Text style={styles.dinoEmoji}>🦖</Text>
+            <Text style={styles.dinoEmoji}>🦕</Text>
+            <Text style={styles.dinoEmoji}>🐦</Text>
+            <Text style={styles.dinoEmoji}>🦎</Text>
+            <Text style={styles.dinoEmoji}>🦣</Text>
+            <Text style={styles.dinoEmoji}>🦏</Text>
+          </View>
+          <Text style={styles.collectionCount}>0 von 30 entdeckt</Text>
+        </View>
+
+        {/* Info Section */}
+        <View style={styles.infoSection}>
+          <Text style={styles.infoTitle}>Wie man spielt:</Text>
+          <Text style={styles.infoText}>• Kämpfe gegen Dinosaurier-Gegner</Text>
+          <Text style={styles.infoText}>• Sammle neue Karten für dein Deck</Text>
+          <Text style={styles.infoText}>• Finde mächtige Relikte</Text>
+          <Text style={styles.infoText}>• Besiege alle 3 Bosse um zu gewinnen!</Text>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -55,71 +98,133 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1a1a2e',
+  },
+  scrollContent: {
     padding: 20,
-    justifyContent: 'center',
-  },
-  titleSection: {
     alignItems: 'center',
-    marginBottom: 50,
   },
-  dinoEmoji: {
+  header: {
+    alignItems: 'center',
+    marginBottom: 40,
+    marginTop: 40,
+  },
+  emoji: {
     fontSize: 64,
-    marginBottom: 16,
+    marginBottom: 10,
   },
   title: {
-    fontSize: 36,
+    fontSize: 42,
     fontWeight: 'bold',
-    color: '#e94560',
+    color: '#ffd700',
     letterSpacing: 4,
   },
   subtitle: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#888',
-    marginTop: 8,
+    marginTop: 5,
   },
-  menu: {
-    marginBottom: 40,
+  menuButtons: {
+    width: '100%',
+    marginBottom: 30,
   },
-  menuButton: {
-    backgroundColor: '#e94560',
-    padding: 20,
-    borderRadius: 16,
+  button: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-  },
-  menuButtonSecondary: {
-    backgroundColor: '#16213e',
-    borderWidth: 1,
-    borderColor: '#0f3460',
-    padding: 16,
+    justifyContent: 'center',
+    padding: 18,
     borderRadius: 12,
-    alignItems: 'center',
     marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
   },
-  menuButtonText: {
+  primaryButton: {
+    backgroundColor: '#e94560',
+  },
+  secondaryButton: {
+    backgroundColor: '#16213e',
+    borderWidth: 2,
+    borderColor: '#0f3460',
+  },
+  buttonEmoji: {
+    fontSize: 28,
+    marginRight: 12,
+  },
+  buttonText: {
+    fontSize: 20,
+    fontWeight: 'bold',
     color: '#fff',
+  },
+  statsSection: {
+    width: '100%',
+    backgroundColor: '#16213e',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+  },
+  sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    color: '#ffd700',
+    marginBottom: 15,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  statBox: {
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 5,
+  },
+  collectionSection: {
+    width: '100%',
+    backgroundColor: '#16213e',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  dinoPreview: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  dinoEmoji: {
+    fontSize: 32,
+    margin: 5,
+  },
+  collectionCount: {
+    fontSize: 14,
+    color: '#888',
   },
   infoSection: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
+    width: '100%',
+    backgroundColor: '#0f3460',
+    borderRadius: 12,
+    padding: 20,
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ffd700',
+    marginBottom: 10,
   },
   infoText: {
-    color: '#666',
     fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 30,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  version: {
-    color: '#444',
-    fontSize: 12,
+    color: '#ccc',
+    marginBottom: 5,
+    lineHeight: 20,
   },
 });
