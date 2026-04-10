@@ -1,5 +1,5 @@
 export type CardType = 'attacker' | 'defender' | 'support' | 'hybrid';
-export type Era = 'trias' | ' Jura' | 'kreide' | 'eiszeit';
+export type Era = 'trias' | 'jura' | 'kreide' | 'eiszeit';
 
 export interface Card {
   id: string;
