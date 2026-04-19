@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { GameState, Card } from '../types';
-import { createInitialState, drawCards, playCard, endTurn, startBattle, isGameOver } from '../engine/gameEngine';
+import { Card } from '../types';
+import { createInitialState, drawCards, playCard, endTurn, startBattle, isGameOver, ExtendedGameState } from '../engine/gameEngine';
 import { sampleEnemy } from '../engine/gameEngine';
 
 export default function BattleScreen() {
   const navigation = useNavigation();
-  const [gameState, setGameState] = useState<GameState>(createInitialState());
+  const [gameState, setGameState] = useState<ExtendedGameState>(createInitialState());
   const [showFact, setShowFact] = useState<Card | null>(null);
+  const [lastPlayedCard, setLastPlayedCard] = useState<string | null>(null);
 
   useEffect(() => {
-    // Start battle with initial draw
     const initial = startBattle(gameState);
     setGameState(initial);
   }, []);
@@ -26,16 +26,23 @@ export default function BattleScreen() {
     
     const newState = playCard(gameState, cardId);
     setGameState(newState);
+    setLastPlayedCard(card.name);
     
     // Check for game over
     const result = isGameOver(newState);
     if (result === 'enemy') {
       Alert.alert('Sieg! 🏆', 'Du hast gewonnen! Der Dino ist besiegt.', [
-        { text: 'Erneut spielen', onPress: () => setGameState(createInitialState()) }
+        { text: 'Erneut spielen', onPress: () => {
+          const fresh = createInitialState();
+          setGameState(startBattle(fresh));
+        }}
       ]);
     } else if (result === 'player') {
       Alert.alert('Niederlage 💀', 'Du wurdest besiegt...', [
-        { text: 'Erneut spielen', onPress: () => setGameState(createInitialState()) }
+        { text: 'Erneut spielen', onPress: () => {
+          const fresh = createInitialState();
+          setGameState(startBattle(fresh));
+        }}
       ]);
     }
   };
@@ -44,32 +51,46 @@ export default function BattleScreen() {
     const newState = endTurn(gameState);
     const drawnState = drawCards(newState, 5);
     setGameState(drawnState);
+    setLastPlayedCard(null);
     
     const result = isGameOver(drawnState);
     if (result === 'player') {
       Alert.alert('Niederlage 💀', 'Du wurdest besiegt...', [
-        { text: 'Erneut spielen', onPress: () => setGameState(createInitialState()) }
+        { text: 'Erneut spielen', onPress: () => {
+          const fresh = createInitialState();
+          setGameState(startBattle(fresh));
+        }}
       ]);
     }
   };
 
-  const renderCard = (card: Card) => (
-    <TouchableOpacity
-      key={card.id}
-      style={[styles.card, gameState.energy < card.energyCost && styles.cardDisabled]}
-      onPress={() => handlePlayCard(card.id)}
-      onLongPress={() => setShowFact(card)}
-    >
-      <Text style={styles.cardEmoji}>{card.emoji}</Text>
-      <Text style={styles.cardName}>{card.name}</Text>
-      <Text style={styles.cardCost}>⚡{card.energyCost}</Text>
-      <View style={styles.cardStats}>
-        {card.damage && <Text style={styles.statText}>⚔️{card.damage}</Text>}
-        {card.block && <Text style={styles.statText}>🛡️{card.block}</Text>}
-        {card.heal && <Text style={styles.statText}>💚{card.heal}</Text>}
-      </View>
-    </TouchableOpacity>
-  );
+  const renderCard = (card: Card) => {
+    const isDisabled = gameState.energy < card.energyCost;
+    const isPlayed = lastPlayedCard === card.name;
+    
+    return (
+      <TouchableOpacity
+        key={card.id}
+        style={[
+          styles.card, 
+          isDisabled && styles.cardDisabled,
+          isPlayed && styles.cardJustPlayed
+        ]}
+        onPress={() => handlePlayCard(card.id)}
+        onLongPress={() => setShowFact(card)}
+      >
+        <Text style={styles.cardEmoji}>{card.emoji}</Text>
+        <Text style={styles.cardName}>{card.name}</Text>
+        <Text style={styles.cardCost}>⚡{card.energyCost}</Text>
+        <View style={styles.cardStats}>
+          {card.damage && <Text style={styles.statText}>⚔️{card.damage}</Text>}
+          {card.block && <Text style={styles.statText}>🛡️{card.block}</Text>}
+          {card.heal && <Text style={styles.statText}>💚{card.heal}</Text>}
+        </View>
+        {card.effect && <Text style={styles.cardEffect}>{card.effect}</Text>}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -79,6 +100,18 @@ export default function BattleScreen() {
           <Text style={styles.backButton}>← Zurück</Text>
         </TouchableOpacity>
         <Text style={styles.turnText}>Zug {gameState.turn}</Text>
+      </View>
+
+      {/* Status Indicators */}
+      <View style={styles.statusRow}>
+        {gameState.enemyConfused > 0 && (
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusTextConfused}>🤕 Feind verwirrt!</Text>
+          </View>
+        )}
+        {lastPlayedCard && (
+          <Text style={styles.lastPlayedText}>Gespielt: {lastPlayedCard}</Text>
+        )}
       </View>
 
       {/* Enemy Section */}
@@ -109,6 +142,7 @@ export default function BattleScreen() {
           <View style={styles.factContent}>
             <Text style={styles.factEmoji}>{showFact.emoji}</Text>
             <Text style={styles.factTitle}>{showFact.name}</Text>
+            {showFact.effect && <Text style={styles.factEffect}>✨ {showFact.effect}</Text>}
             <Text style={styles.factText}>{showFact.fact}</Text>
             <TouchableOpacity onPress={() => setShowFact(null)}>
               <Text style={styles.factClose}>Schließen</Text>
@@ -145,7 +179,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 8,
   },
   backButton: {
     color: '#e94560',
@@ -156,9 +190,31 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  statusRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+    minHeight: 24,
+  },
+  statusBadge: {
+    backgroundColor: '#e94560',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusTextConfused: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  lastPlayedText: {
+    color: '#00ff00',
+    fontSize: 12,
+  },
   enemySection: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
   },
   enemyEmoji: {
     fontSize: 64,
@@ -190,7 +246,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   playerSection: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   playerStats: {
     flexDirection: 'row',
@@ -230,6 +286,10 @@ const styles = StyleSheet.create({
   cardDisabled: {
     opacity: 0.5,
   },
+  cardJustPlayed: {
+    borderColor: '#00ff00',
+    borderWidth: 2,
+  },
   cardEmoji: {
     fontSize: 36,
     marginBottom: 4,
@@ -253,6 +313,13 @@ const styles = StyleSheet.create({
     color: '#aaa',
     fontSize: 12,
     marginHorizontal: 2,
+  },
+  cardEffect: {
+    color: '#888',
+    fontSize: 9,
+    textAlign: 'center',
+    marginTop: 4,
+    fontStyle: 'italic',
   },
   endTurnButton: {
     backgroundColor: '#e94560',
@@ -280,7 +347,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.8)',
+    backgroundColor: 'rgba(0,0,0,0.85)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 100,
@@ -300,6 +367,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 20,
     fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  factEffect: {
+    color: '#ffd700',
+    fontSize: 14,
     marginBottom: 8,
   },
   factText: {
