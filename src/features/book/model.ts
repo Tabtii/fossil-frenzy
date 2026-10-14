@@ -199,16 +199,8 @@ export function actForEra(era: Era): number {
   return eraIndex(era) + 1;
 }
 
-/**
- * Fossil age with "heute" for species that still live (end 0):
- * [1, 0] → "vor 1 Mio. Jahren bis heute", [0, 0] → "heute".
- */
-export function formatFossilAge(mya: readonly [number, number]): string {
-  const [from, to] = mya;
-  if (to > 0) return formatMya(mya);
-  if (from <= 0) return 'heute';
-  return `${formatMya([from, from])} bis heute`;
-}
+/** Fossil age text; kept as the book's name for `formatMya`. */
+export const formatFossilAge = formatMya;
 
 const MONTHS_DE = [
   'Januar',

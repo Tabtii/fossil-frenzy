@@ -13,6 +13,7 @@ import {
   sanitizePersisted,
   sanitizeRun,
   useGameStore,
+  resetStorageGuard,
   waitForHydration,
 } from '../store';
 
@@ -60,6 +61,7 @@ function enterFirstNode(): string {
 
 beforeEach(async () => {
   await waitForHydration();
+  resetStorageGuard();
   useGameStore.setState({ run: null, meta: initialMeta(), hydrated: true });
   await AsyncStorage.clear();
 });
@@ -108,6 +110,40 @@ describe('hydration', () => {
     await useGameStore.persist.rehydrate();
 
     expect(store().hydrated).toBe(true);
+  });
+
+  it('never overwrites a save it could not read', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    useGameStore.setState({ hydrated: false });
+    const saved = JSON.stringify({ state: { run: null, meta: { ...initialMeta(), runsStarted: 42 } }, version: STORAGE_VERSION });
+    await AsyncStorage.setItem(STORAGE_KEY, saved);
+    jest.mocked(AsyncStorage.getItem).mockRejectedValueOnce(new Error('disk'));
+
+    await useGameStore.persist.rehydrate();
+    store().newRun(SEED);
+    await Promise.resolve();
+
+    expect(await AsyncStorage.getItem(STORAGE_KEY)).toBe(saved);
+  });
+
+  it('backs up corrupt JSON before writing defaults', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    useGameStore.setState({ hydrated: false });
+    await AsyncStorage.setItem(STORAGE_KEY, '{kaputt');
+
+    await useGameStore.persist.rehydrate();
+
+    expect(await AsyncStorage.getItem(`${STORAGE_KEY}/corrupt`)).toBe('{kaputt');
+  });
+
+  it('ignores actions before the save has loaded', () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    useGameStore.setState({ hydrated: false });
+    store().newRun(SEED);
+    store().updateSettings({ haptics: false });
+    expect(store().run).toBeNull();
+    expect(store().meta.settings.haptics).toBe(true);
+    useGameStore.setState({ hydrated: true });
   });
 
   it('migrates older versions and drops runs that reference missing content', async () => {
@@ -347,6 +383,14 @@ describe('full run', () => {
 });
 
 describe('finishRun / abandonRun', () => {
+  it('counts an unclosed victory when a new run starts', () => {
+    store().newRun(SEED);
+    useGameStore.setState({ run: { ...requireRun(), screen: { type: 'victory' } } });
+    store().newRun(SEED + 1);
+    expect(store().meta.runsWon).toBe(1);
+    expect(store().meta.runsStarted).toBe(2);
+  });
+
   it('counts a victory and clears the run', () => {
     store().newRun(SEED);
     useGameStore.setState({ run: { ...requireRun(), screen: { type: 'victory' } } });

@@ -117,7 +117,7 @@ export const Button = memo(function Button({
       {loading ? <ActivityIndicator size="small" color={palette.text} style={styles.spinner} /> : null}
       {!loading && icon !== undefined ? (
         typeof icon === 'string' ? (
-          <Text style={[styles.icon, textSizes[size]]} maxFontSizeMultiplier={fontScale.badge}>
+          <Text style={[textSizes[size], { color: palette.text }]} maxFontSizeMultiplier={fontScale.badge}>
             {icon}
           </Text>
         ) : (
@@ -126,7 +126,7 @@ export const Button = memo(function Button({
       ) : null}
       <Text
         style={[styles.label, textSizes[size], { color: palette.text }, loading && styles.loadingLabel]}
-        numberOfLines={1}
+        numberOfLines={2}
         maxFontSizeMultiplier={fontScale.title}
       >
         {label}
@@ -151,7 +151,6 @@ const styles = StyleSheet.create({
   pressed: { transform: [{ scale: 0.98 }] },
   label: { ...typography.bodyStrong, flexShrink: 1, textAlign: 'center' },
   loadingLabel: { opacity: 0.8 },
-  icon: { color: colors.text },
   spinner: { marginRight: spacing.xxs },
   trailing: { marginLeft: spacing.xs },
 });

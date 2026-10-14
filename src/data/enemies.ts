@@ -302,7 +302,7 @@ const JURA_ENEMIES: EnemyDef[] = [
     tier: 'elite',
     hp: [64, 72],
     moves: [
-      { id: 'platten', name: 'Platten aufstellen', effects: [{ type: 'block', amount: 14 }] },
+      { id: 'platten', name: 'Platten zeigen', effects: [{ type: 'block', amount: 14 }] },
       {
         id: 'stampfen',
         name: 'Stampfen',
@@ -383,7 +383,7 @@ const KREIDE_ENEMIES: EnemyDef[] = [
   // --- normal ---
   {
     id: 'velociraptor',
-    name: 'Velociraptoren',
+    name: 'Velociraptor',
     emoji: '🦖',
     era: 'kreide',
     tier: 'normal',
@@ -393,7 +393,7 @@ const KREIDE_ENEMIES: EnemyDef[] = [
       { id: 'biss', name: 'Biss', effects: [{ type: 'attack', amount: 12 }] },
       {
         id: 'umzingeln',
-        name: 'Umzingeln',
+        name: 'Lauern',
         effects: [
           { type: 'status', status: 'strength', amount: 1, target: 'self' },
           { type: 'block', amount: 8 },
@@ -498,7 +498,7 @@ const KREIDE_ENEMIES: EnemyDef[] = [
       { id: 'daumenkrallen', name: 'Daumenkrallen', effects: [{ type: 'attack', amount: 6, hits: 2 }] },
       {
         id: 'segel',
-        name: 'Segel aufstellen',
+        name: 'Segel zeigen',
         effects: [
           { type: 'status', status: 'strength', amount: 2, target: 'self' },
           { type: 'block', amount: 10 },

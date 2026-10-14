@@ -70,6 +70,8 @@ describe('number formatting', () => {
     expect(formatMya([2.6, 0.0117])).toBe('vor 2,6 Mio. bis 11.700 Jahren');
     expect(formatMya([0.05, 0.01])).toBe('vor 50.000–10.000 Jahren');
     expect(formatMya([66, 66])).toBe('vor 66 Mio. Jahren');
+    expect(formatMya([1, 0])).toBe('vor 1 Mio. Jahren bis heute');
+    expect(formatMya([0, 0])).toBe('heute');
     expect(formatLength(1)).toBe('ca. 1 m');
     expect(formatLength(0.45)).toBe('ca. 0,45 m');
   });

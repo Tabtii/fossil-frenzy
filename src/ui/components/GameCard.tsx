@@ -260,7 +260,8 @@ function trendColor(preview: DamagePreview): string {
 }
 
 function frameColor(rarity: Rarity, selected: boolean): string {
-  return selected ? colors.accent : rarityColors[rarity];
+  // Not the accent: rare cards already use it, and the glow is missing on Android < 9.
+  return selected ? colors.focus : rarityColors[rarity];
 }
 
 function typeTint(type: CardType): { backgroundColor: string } {

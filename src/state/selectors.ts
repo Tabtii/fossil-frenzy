@@ -70,9 +70,16 @@ export function selectActions(state: GameStore): GameActions {
   };
 }
 
-/** Nodes the player may enter right now (empty outside the map screen). */
+const NO_NODES: MapNode[] = [];
+
+/**
+ * Nodes the player may enter right now (empty outside the map screen).
+ * Returns a new array on the map: wrap in useShallow when used as a hook selector.
+ */
 export function selectAvailableNodes(state: GameStore): MapNode[] {
-  return state.run ? availableNodes(state.run) : [];
+  if (!state.run) return NO_NODES;
+  const nodes = availableNodes(state.run);
+  return nodes.length === 0 ? NO_NODES : nodes;
 }
 
 export function selectCurrentNode(state: GameStore): MapNode | null {

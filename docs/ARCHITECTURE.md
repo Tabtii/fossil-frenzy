@@ -42,12 +42,13 @@ eigene Fixtures).
   außer `pierce`. `bleed` ignoriert Block und Modifikatoren.
 - **Verwirrt** (nur sinnvoll beim Gegner): Hat der Gegner `confused > 0` und führt
   einen Zug mit `attack` aus, treffen alle Angriffe dieses Zugs ihn selbst
-  (gegen seinen eigenen Block, ohne `vulnerable` des Spielers), danach `confused − 1`.
+  (gegen seinen eigenen Block, mit seinen eigenen `strength`/`weak`/`vulnerable`), danach `confused − 1`.
   Andere Effekte des Zugs wirken normal.
 - Status-Stapel addieren sich. `strength` bleibt den ganzen Kampf.
 - `firstAttackThisTurn`: wahr, wenn vor dieser Karte in diesem Zug noch keine
   Karte vom Typ `attack` gespielt wurde.
-- `scaling` zählt Karten **ohne** die gerade gespielte Karte.
+- `scaling` zählt Karten **ohne** die gerade gespielte Karte (Kartentext: „je weitere …-Karte im Deck“).
+  Bei Mehrfachtreffern gilt der Bonus pro Treffer.
 - Heilung kann Max-LP nicht überschreiten. `execute` setzt Gegner-LP auf 0.
 - Sieg sobald Gegner-LP ≤ 0 (sofort, auch mitten in einem Effekt), Niederlage
   sobald Spieler-LP ≤ 0. Danach sind keine Aktionen mehr möglich.

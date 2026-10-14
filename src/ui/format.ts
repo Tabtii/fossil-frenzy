@@ -37,10 +37,12 @@ function myaPart(mya: number): { value: string; millions: boolean } {
 
 /**
  * Fossil age range in German, oldest first:
- * [231, 228] → "vor 231–228 Mio. Jahren", [2.6, 0.0117] → "vor 2,6 Mio. bis 11.700 Jahren".
+ * [231, 228] → "vor 231–228 Mio. Jahren", [2.6, 0.0117] → "vor 2,6 Mio. bis 11.700 Jahren",
+ * [1, 0] (still alive) → "vor 1 Mio. Jahren bis heute", [0, 0] → "heute".
  */
 export function formatMya(mya: readonly [number, number]): string {
   const [from, to] = mya;
+  if (to <= 0) return from <= 0 ? 'heute' : `${formatMya([from, from])} bis heute`;
   const a = myaPart(from);
   const b = myaPart(to);
   if (from === to) return `vor ${a.value}${a.millions ? ' Mio.' : ''} Jahren`;

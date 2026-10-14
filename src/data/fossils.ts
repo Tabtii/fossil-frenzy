@@ -143,7 +143,7 @@ export const FOSSILS: FossilEntry[] = [
     mya: [243, 228],
     diet: 'carnivore',
     lengthM: 4,
-    foundIn: 'Europa, Nordafrika, China',
+    foundIn: 'Europa (v. a. Deutschland)',
     facts: [
       'Er jagte Fische im flachen Muschelkalk-Meer, das damals weite Teile Deutschlands bedeckte.',
       'Seine langen, spitzen Zähne griffen ineinander wie eine Fischreuse.',
@@ -178,7 +178,7 @@ export const FOSSILS: FossilEntry[] = [
     mya: [247, 237],
     diet: 'carnivore',
     lengthM: 2,
-    foundIn: 'Europa, China',
+    foundIn: 'Europa (v. a. Deutschland)',
     facts: [
       'Mit flachen Pflasterzähnen knackte er vermutlich Muscheln und andere Schalentiere.',
       'Auf seinem Rücken saß eine Reihe von Knochenplatten.',
@@ -339,7 +339,7 @@ export const FOSSILS: FossilEntry[] = [
     diet: 'photosynthesis',
     foundIn: 'China',
     facts: [
-      'Ginkgos gab es schon im Jura – ihre Blätter sahen fast so aus wie heute.',
+      'Ginkgos gab es schon im Jura – ihre fächerförmigen Blätter waren damals aber noch tiefer eingeschnitten als heute.',
       'Heute lebt nur noch eine einzige Art: Ginkgo biloba.',
       'Deshalb wird der Ginkgo oft „lebendes Fossil“ genannt.',
       'Ginkgos sind weder Laub- noch Nadelbäume, sondern eine eigene Pflanzengruppe.',
@@ -537,7 +537,7 @@ export const FOSSILS: FossilEntry[] = [
       'Echte Velociraptoren waren nur etwa so groß wie ein Truthahn – viel kleiner als im Film.',
       'Er hatte Federn: An seinem Unterarm fand man Ansatzstellen für Schwungfedern.',
       'Ein berühmtes Fossil zeigt einen Velociraptor im Kampf mit einem Protoceratops.',
-      'Ob Velociraptoren gemeinsam jagten, ist nicht belegt.',
+      'Ob Velociraptoren gemeinsam jagten, ist nicht belegt – im Spiel tun sie es trotzdem.',
     ],
   },
   {
@@ -552,7 +552,7 @@ export const FOSSILS: FossilEntry[] = [
     lengthM: 10,
     foundIn: 'Belgien, England, Deutschland',
     facts: [
-      'Er wurde 1825 als einer der ersten Dinosaurier überhaupt wissenschaftlich beschrieben.',
+      'Die Gattung Iguanodon wurde 1825 als einer der ersten Dinosaurier überhaupt wissenschaftlich beschrieben.',
       'Seinen Daumenstachel hielt man zuerst für ein Horn auf der Nase.',
       'In einem Kohlebergwerk in Bernissart (Belgien) fand man 1878 über 30 Skelette.',
       'Er konnte vermutlich auf zwei und auf vier Beinen laufen.',
@@ -602,7 +602,7 @@ export const FOSSILS: FossilEntry[] = [
     mya: [77, 73],
     diet: 'herbivore',
     lengthM: 9.5,
-    foundIn: 'Kanada, USA',
+    foundIn: 'Kanada (Alberta)',
     facts: [
       'Sein langer Kopfkamm war hohl und innen von Röhren durchzogen.',
       'Vermutlich erzeugte er damit tiefe, laute Töne – wie mit einer Posaune.',
@@ -658,7 +658,7 @@ export const FOSSILS: FossilEntry[] = [
     foundIn: 'USA',
     facts: [
       'Sein Schädeldach war bis zu 25 Zentimeter dick.',
-      'Verletzungen an Schädeln sprechen dafür, dass sie vermutlich mit den Köpfen kämpften.',
+      'Verletzungen an Schädeln sprechen dafür, dass sie mit den Köpfen kämpften.',
       'Sein Name Pachycephalosaurus bedeutet „Dickkopf-Echse“.',
       'Er fraß vermutlich vor allem Pflanzen.',
     ],

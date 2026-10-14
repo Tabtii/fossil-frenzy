@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create, type StoreApi } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import { persist, type PersistStorage, type StorageValue } from 'zustand/middleware';
 
 import { CONTENT } from '@/data';
 import {
@@ -227,6 +227,9 @@ export function sanitizeRun(raw: unknown, db: ContentDB = CONTENT): RunState | n
     return null;
   }
   if (!isScreen(screen, db, nodeIds)) return null;
+  // Events only describe the last action before saving; never replay them.
+  const loadedScreen: RunScreen =
+    screen.type === 'combat' ? { ...screen, combat: { ...screen.combat, events: [] } } : screen;
   return {
     seed,
     rngState,
@@ -238,7 +241,7 @@ export function sanitizeRun(raw: unknown, db: ContentDB = CONTENT): RunState | n
     hp,
     maxHp,
     nextUid,
-    screen,
+    screen: loadedScreen,
     stats: sanitizeStats(raw.stats),
   };
 }
@@ -262,6 +265,56 @@ export function migratePersisted(persisted: unknown, version: number): Persisted
 }
 
 // ---------------------------------------------------------------------------
+// Storage
+// ---------------------------------------------------------------------------
+
+/** Set when the save could not be read; blocks writes so it is never overwritten. */
+let writesBlocked = false;
+
+/**
+ * JSON storage that never destroys a save it could not read: unreadable JSON
+ * is backed up before defaults are written, and a failed read blocks all
+ * writes for this session (the next launch tries again).
+ */
+const safeStorage: PersistStorage<PersistedGame> = {
+  getItem: async (name) => {
+    let raw: string | null;
+    try {
+      raw = await AsyncStorage.getItem(name);
+    } catch (error) {
+      writesBlocked = true;
+      console.warn('[store] could not read saved state; saving is disabled for this session:', error);
+      return null;
+    }
+    if (raw === null) return null;
+    try {
+      return JSON.parse(raw) as StorageValue<PersistedGame>;
+    } catch (error) {
+      console.warn('[store] saved state is corrupt; keeping a backup:', error);
+      try {
+        await AsyncStorage.setItem(`${name}/corrupt`, raw);
+      } catch {
+        writesBlocked = true;
+      }
+      return null;
+    }
+  },
+  setItem: async (name, value) => {
+    if (writesBlocked) return;
+    await AsyncStorage.setItem(name, JSON.stringify(value));
+  },
+  removeItem: async (name) => {
+    if (writesBlocked) return;
+    await AsyncStorage.removeItem(name);
+  },
+};
+
+/** Test hook: re-enables writes after a simulated read failure. */
+export function resetStorageGuard(): void {
+  writesBlocked = false;
+}
+
+// ---------------------------------------------------------------------------
 // Store
 // ---------------------------------------------------------------------------
 
@@ -275,7 +328,15 @@ export const useGameStore = create<GameStore>()(
       storeApi = api;
 
       /** Runs one engine step on the current run; no-op without a run or change. */
+      // Actions before hydration would write defaults over the save; ignore them.
+      const ready = (action: string): boolean => {
+        if (get().hydrated) return true;
+        console.warn(`[store] ${action} ignored: saved state not loaded yet`);
+        return false;
+      };
+
       const applyRun = (action: string, step: (run: RunState) => RunState, sync?: MetaSync): void => {
+        if (!ready(action)) return;
         const { run, meta } = get();
         if (!run) return;
         let next: RunState;
@@ -295,6 +356,7 @@ export const useGameStore = create<GameStore>()(
         meta: initialMeta(),
 
         newRun: (seed) => {
+          if (!ready('newRun')) return;
           let run: RunState;
           try {
             run = createRun(CONTENT, seed ?? makeSeed());
@@ -302,13 +364,20 @@ export const useGameStore = create<GameStore>()(
             reportError('newRun', error);
             return;
           }
-          let meta = recordRunStarted(get().meta);
+          const previous = get().run;
+          let meta = get().meta;
+          // A finished run that was never closed still counts.
+          if (previous && (previous.screen.type === 'victory' || previous.screen.type === 'defeat')) {
+            meta = recordRunFinished(meta, previous.screen.type === 'victory');
+          }
+          meta = recordRunStarted(meta);
           meta = discoverFossils(meta, deckFossils(CONTENT, run), nowIso());
           meta = markCardsSeen(meta, run.deck.map((card) => card.defId));
           set({ run, meta });
         },
 
         abandonRun: () => {
+          if (!ready('abandonRun')) return;
           if (get().run !== null) set({ run: null });
         },
 
@@ -355,6 +424,7 @@ export const useGameStore = create<GameStore>()(
         startNextAct: () => applyRun('startNextAct', (run) => engineStartNextAct(CONTENT, run)),
 
         finishRun: () => {
+          if (!ready('finishRun')) return;
           const { run, meta } = get();
           if (!run) return;
           const { type } = run.screen;
@@ -363,12 +433,14 @@ export const useGameStore = create<GameStore>()(
         },
 
         updateSettings: (patch) => {
+          if (!ready('updateSettings')) return;
           const { meta } = get();
           const next = updateMetaSettings(meta, patch);
           if (next !== meta) set({ meta: next });
         },
 
         resetProgress: () => {
+          if (!ready('resetProgress')) return;
           set({ run: null, meta: resetMeta(get().meta) });
         },
       };
@@ -376,7 +448,7 @@ export const useGameStore = create<GameStore>()(
     {
       name: STORAGE_KEY,
       version: STORAGE_VERSION,
-      storage: createJSONStorage<PersistedGame>(() => AsyncStorage),
+      storage: safeStorage,
       partialize: (state): PersistedGame => ({ run: state.run, meta: state.meta }),
       migrate: migratePersisted,
       merge: (persisted, current): GameStore =>

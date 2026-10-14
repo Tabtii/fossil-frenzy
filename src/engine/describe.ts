@@ -14,7 +14,10 @@ import type {
 // Card text is always generated from effects so text and rules never drift.
 
 /** Effects/cost/exhaust after applying the upgrade if `upgraded`. */
-export function resolveCard(def: CardDef, upgraded: boolean): { cost: number; effects: CardEffect[]; exhaust: boolean } {
+export function resolveCard(
+  def: CardDef,
+  upgraded: boolean,
+): { cost: number; effects: CardEffect[]; exhaust: boolean } {
   if (!upgraded) {
     return { cost: def.cost, effects: def.effects, exhaust: def.exhaust ?? false };
   }
@@ -27,9 +30,21 @@ export function resolveCard(def: CardDef, upgraded: boolean): { cost: number; ef
 
 export const STATUS_INFO: Record<StatusId, { name: string; emoji: string; description: string }> = {
   strength: { name: 'Stärke', emoji: '💪', description: '+1 Schaden pro Treffer je Stapel. Hält den ganzen Kampf.' },
-  vulnerable: { name: 'Verwundbar', emoji: '🎯', description: 'Erleidet 50 % mehr Angriffsschaden. Sinkt jede Runde um 1.' },
-  weak: { name: 'Geschwächt', emoji: '🥀', description: 'Verursacht 25 % weniger Angriffsschaden. Sinkt jede Runde um 1.' },
-  bleed: { name: 'Blutung', emoji: '🩸', description: 'Verliert zu Zugbeginn so viele LP (ignoriert Block), danach −1.' },
+  vulnerable: {
+    name: 'Verwundbar',
+    emoji: '🎯',
+    description: 'Erleidet 50 % mehr Angriffsschaden. Sinkt jede Runde um 1.',
+  },
+  weak: {
+    name: 'Geschwächt',
+    emoji: '🥀',
+    description: 'Verursacht 25 % weniger Angriffsschaden. Sinkt jede Runde um 1.',
+  },
+  bleed: {
+    name: 'Blutung',
+    emoji: '🩸',
+    description: 'Verliert zu Zugbeginn so viele LP (ignoriert Block), danach −1.',
+  },
   confused: { name: 'Verwirrt', emoji: '💫', description: 'Der nächste Angriffszug trifft sich selbst, danach −1.' },
 };
 
@@ -79,7 +94,8 @@ function signed(value: number): string {
 function scalingPer(scaling: Scaling): string {
   switch (scaling.per) {
     case 'tagInZone':
-      return `je ${TAG_NAMES[scaling.tag]}-Karte ${ZONE_PHRASES[scaling.zone]}`;
+      // The played card itself is never counted, so "weitere" for the whole deck.
+      return `je ${scaling.zone === 'deck' ? 'weitere ' : ''}${TAG_NAMES[scaling.tag]}-Karte ${ZONE_PHRASES[scaling.zone]}`;
     case 'cardsPlayedThisTurn':
       return 'je zuvor in diesem Zug gespielte Karte';
     case 'playerBlock':
@@ -95,7 +111,13 @@ function scalingPer(scaling: Scaling): string {
  * - base 0: "2 Block je Pflanzen-Karte auf der Hand (max. 6)" or
  *   "Schaden in Höhe deines Blocks"
  */
-function amountPhrase(base: number, unit: string, scaling: Scaling | undefined, extra: string): string {
+function amountPhrase(
+  base: number,
+  unit: string,
+  scaling: Scaling | undefined,
+  extra: string,
+  multiHit = false,
+): string {
   if (!scaling) return `${base} ${unit}${extra}`;
   if (base === 0) {
     if (scaling.per === 'playerBlock' && scaling.amount === 1 && scaling.max === undefined) {
@@ -105,7 +127,9 @@ function amountPhrase(base: number, unit: string, scaling: Scaling | undefined, 
     return `${scaling.amount} ${unit} ${scalingPer(scaling)}${max}${extra}`;
   }
   const max = scaling.max !== undefined ? ` (max. ${signed(scaling.max)})` : '';
-  return `${base} ${unit}${extra}, ${signed(scaling.amount)} ${scalingPer(scaling)}${max}`;
+  // Multi-hit attacks add the bonus to every hit.
+  const perHit = multiHit ? ' pro Treffer' : '';
+  return `${base} ${unit}${extra}, ${signed(scaling.amount)}${perHit} ${scalingPer(scaling)}${max}`;
 }
 
 function describeCondition(condition: Condition): string {
@@ -134,7 +158,7 @@ function describeEffect(effect: CardEffect, enemyInContext: boolean): string {
       const hits = effect.hits ?? 1;
       const times = hits !== 1 ? ` ${hits}-mal` : '';
       const pierce = effect.pierce ? ` (${KEYWORD_INFO.pierce.name})` : '';
-      return `Verursache ${amountPhrase(effect.amount, 'Schaden', effect.scaling, `${times}${pierce}`)}.`;
+      return `Verursache ${amountPhrase(effect.amount, 'Schaden', effect.scaling, `${times}${pierce}`, hits > 1)}.`;
     }
     case 'block':
       return `Erhalte ${amountPhrase(effect.amount, 'Block', effect.scaling, '')}.`;

@@ -108,7 +108,7 @@ describe('describeCard', () => {
     ).toBe('Erhalte 2 Block je Pflanzen-Karte auf der Hand (max. 6).');
     expect(
       inline([{ type: 'damage', amount: 3, hits: 2, pierce: true, scaling: { per: 'tagInZone', tag: 'carnivore', zone: 'deck', amount: 1 } }]),
-    ).toBe('Verursache 3 Schaden 2-mal (Durchschlagend), +1 je Fleischfresser-Karte im Deck.');
+    ).toBe('Verursache 3 Schaden 2-mal (Durchschlagend), +1 pro Treffer je weitere Fleischfresser-Karte im Deck.');
     expect(
       inline([{ type: 'block', amount: 4, scaling: { per: 'tagInZone', tag: 'marine', zone: 'drawPile', amount: 1, max: 3 } }]),
     ).toBe('Erhalte 4 Block, +1 je Meeresbewohner-Karte im Nachziehstapel (max. +3).');
