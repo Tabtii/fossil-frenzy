@@ -47,7 +47,9 @@ export function swipeThreshold(cardHeight: number): number {
 export const PREVIEW_MIN_WIDTH = 104;
 export const PREVIEW_MAX_WIDTH = 220;
 /** Height of the caption under the preview card. */
-export const PREVIEW_CAPTION_HEIGHT = 22;
+export const PREVIEW_CAPTION_HEIGHT = 26;
+/** Room kept free below the enemy target so its HP bar stays visible. */
+export const ENEMY_BAR_CLEARANCE = 32;
 
 /**
  * Width of the enlarged preview of the selected card. It sits at the bottom of
@@ -57,7 +59,8 @@ export const PREVIEW_CAPTION_HEIGHT = 22;
  */
 export function previewCardWidth(arenaHeight: number, targetBottom: number, innerWidth: number): number | null {
   if (arenaHeight <= 0) return null;
-  const available = arenaHeight - targetBottom - spacing.sm - HAND_TOP_SPACE - PREVIEW_CAPTION_HEIGHT;
+  const available =
+    arenaHeight - targetBottom - ENEMY_BAR_CLEARANCE - spacing.sm - HAND_TOP_SPACE - PREVIEW_CAPTION_HEIGHT;
   const byHeight = Math.floor(available / CARD_ASPECT);
   const width = Math.min(byHeight, Math.round(innerWidth * 0.62), PREVIEW_MAX_WIDTH);
   return width >= PREVIEW_MIN_WIDTH ? width : null;

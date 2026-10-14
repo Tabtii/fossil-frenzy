@@ -43,7 +43,10 @@ export const FossilTile = memo(function FossilTile({ tile, width, onOpen }: Foss
         variant="label"
         tone={tile.discovered ? 'primary' : 'muted'}
         align="center"
-        numberOfLines={2}
+        // A single long word (e.g. "Tanystropheus") shrinks instead of breaking mid-word.
+        numberOfLines={tile.discovered && !tile.name.includes(' ') ? 1 : 2}
+        adjustsFontSizeToFit
+        minimumFontScale={0.7}
         maxFontSizeMultiplier={fontScale.cardCompact}
         style={styles.name}
       >

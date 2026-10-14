@@ -1,65 +1,50 @@
-# 🦖 Fossil Frenzy - Dino Deckbuilder
+# 🦖 Fossil Frenzy — Dino-Deckbuilder
 
-Ein Roguelike Deckbuilder-Spiel mit Dinosauriern und paläontologischen Fakten!
+Ein Roguelike-Deckbuilder für **Android und iOS**: Ziehe auf einer Expedition durch
+Trias, Jura, Kreidezeit und Eiszeit, baue dein Deck aus Urzeit-Karten und fülle
+dein Fossilienbuch mit echten paläontologischen Fakten.
 
 ## Features
 
-- **Deckbuilding** - Sammle und spiele dinosaurier-Karten
-- **Roguelike** - Prozedural generierte Kämpfe
-- **Lernfaktor** - Echte paläontologische Fakten zu jeder Karte
-- **Mobile Ready** - React Native + Expo für iOS & Android
-
-## Screenshots
-
-TBD
+- **Expeditionen** über 4 Akte mit verzweigter Karte: Kämpfe, Elite-Gegner, Rastplätze,
+  Ausgrabungen und ein Boss pro Erdzeitalter
+- **Kampf** mit Energie, Block, Statuseffekten (Stärke, Verwundbar, Geschwächt,
+  Blutung, Verwirrt) und angekündigten Gegnerabsichten
+- **43 Karten, 28 Gegner, 50 Fossilien** — Kartentexte werden aus den Regeln erzeugt
+- **Fossilienbuch & Sammlung** mit geprüften Fakten (Alter, Fundort, Ernährung, „Wusstest du?“)
+- **Mobile First**: Hochformat, Daumenzone, Safe Areas, 320–430 dp, Haptik,
+  reduzierte Bewegung, Screenreader-Labels
+- Spielstand wird automatisch gespeichert (Expedition fortsetzen jederzeit möglich)
 
 ## Tech Stack
 
-- React Native
-- Expo
-- TypeScript
+Expo SDK 57 · React Native 0.86 · Expo Router · TypeScript · zustand · Reanimated 4 ·
+Gesture Handler · Jest
 
-## Installation
+Architektur und Spielregeln: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+
+## Entwicklung
 
 ```bash
-# Dependencies installieren
 npm install
-
-# Development Server starten
-npx expo start
-
-# iOS Simulator
+npx expo start          # Dev-Server (Expo Go oder Development Build)
+npx expo start --android
 npx expo start --ios
 
-# Android Emulator
-npx expo start --android
+npm run typecheck       # tsc --noEmit
+npm run lint            # expo lint
+npm test                # jest
 ```
+
+Builds für die Stores laufen über EAS (`npx eas-cli@latest build`).
 
 ## Spielanleitung
 
-1. **Spielen** - Starte einen neuen Kampf
-2. **Karten ausspielen** - Tippe auf eine Karte um sie zu spielen
-3. **Ende-Zug** - Klicke "Zug beenden" wenn du fertig bist
-4. **Lange drücken** - Zeigt paläontologische Fakten zur Karte
-5. **Sieg** - Besiege den Dino mit 0 HP!
-
-## Karten
-
-| Karte | Typ | Kosten | Effekt |
-|-------|-----|-------|--------|
-| T-Rex | Angreifer | 3 | 12 Schaden |
-| Triceratops | Verteidiger | 2 | 8 Block |
-| Archaeopteryx | Hybrid | 1 | 4 Schaden |
-| Urweltfarn | Support | 1 | 5 Heilung |
-
-## To-Do
-
-- [ ] Mehr Karten
-- [ ] Fossilienbuch Screen
-- [ ] Sammlungs-Screen
-- [ ] Mehr Biome/ Gegner
-- [ ] Sound & Musik
-- [ ] Animationen
+1. **Neue Expedition** starten und auf der Karte einen leuchtenden Ort wählen.
+2. **Karte antippen** hebt sie an, nochmal tippen oder nach oben wischen spielt sie.
+3. **Lange drücken** zeigt Details und den Fossil-Fakt zur Karte.
+4. Die Anzeige über dem Gegner verrät seinen nächsten Zug — Block lohnt sich bei ⚔️.
+5. Nach jedem Sieg eine neue Karte wählen, an Rastplätzen heilen oder Karten verbessern.
 
 ## Lizenz
 

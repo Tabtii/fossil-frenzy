@@ -49,15 +49,15 @@ Das Studio nutzt folgende spezialisierte Agenten:
 - [x] Fossilienbuch
 
 ### Phase 2: Sammlung & Sound
-- [ ] Sammlung Screen
+- [x] Sammlung Screen
 - [ ] Sound-Effekte
-- [ ] Mehr Karten (20+)
-- [ ] Animationen
+- [x] Mehr Karten (20+)
+- [x] Animationen
 
 ### Phase 3: Progression
-- [ ] Rogue-Like Runde (Map)
-- [ ] Boss-Kämpfe
-- [ ] Deck-Upgrades
+- [x] Rogue-Like Runde (Map)
+- [x] Boss-Kämpfe
+- [x] Deck-Upgrades
 - [ ] Achievements
 
 ### Phase 4: Polierung

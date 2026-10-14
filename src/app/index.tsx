@@ -33,7 +33,9 @@ export default function HomeScreen() {
   const meta = useMeta();
   const overview = useGameStore(useShallow((state) => runOverview(state.run)));
   const { newRun, finishRun } = useGameActions();
-  const { innerWidth } = useLayout();
+  const { innerWidth, isCompact, fontScale: systemFontScale } = useLayout();
+  // Two tiles side by side truncate their titles on small phones or large text.
+  const stackTiles = isCompact || systemFontScale >= 1.3;
   const focused = useIsFocused();
   const reduceMotion = useReduceMotion(meta.settings.reducedMotion);
   const animate = focused && !reduceMotion;
@@ -117,12 +119,13 @@ export default function HomeScreen() {
         accessibilityHint={activeRun ? 'Bricht die laufende Expedition nach einer Rückfrage ab.' : undefined}
         testID="home-new-run"
       />
-      <View style={styles.tiles}>
+      <View style={stackTiles ? styles.tilesStacked : styles.tiles}>
         <MenuTile
           icon="📖"
           title="Fossilienbuch"
           caption={progressText(fossils, 'entdeckt')}
           onPress={onFossils}
+          style={stackTiles ? styles.tileStacked : undefined}
           testID="home-fossils"
         />
         <MenuTile
@@ -130,6 +133,7 @@ export default function HomeScreen() {
           title="Sammlung"
           caption={progressText(cards, 'Karten')}
           onPress={onCollection}
+          style={stackTiles ? styles.tileStacked : undefined}
           testID="home-collection"
         />
       </View>
@@ -182,4 +186,6 @@ const styles = StyleSheet.create({
   hero: { alignItems: 'center', gap: spacing.md },
   stats: { paddingHorizontal: spacing.sm },
   tiles: { flexDirection: 'row', gap: spacing.sm },
+  tilesStacked: { gap: spacing.sm },
+  tileStacked: { flex: 0 },
 });

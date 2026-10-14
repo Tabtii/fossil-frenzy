@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withTiming, ZoomIn } from 'react-native-reanimated';
 
-import { AppText, durations, GameCard, spacing } from '@/ui';
+import { AppText, colors, durations, GameCard, radii, spacing } from '@/ui';
 
 import type { HandEntry } from '../hand';
 import { BATTLE_TEXT } from '../strings';
@@ -22,7 +22,14 @@ export interface CardPreviewProps {
  * Tapping it plays the card. Hidden from screen readers: the hand card and
  * the "Ausspielen" button already expose the same actions.
  */
-export const CardPreview = memo(function CardPreview({ entry, width, shakeId, reduce, onPlay, onDetails }: CardPreviewProps) {
+export const CardPreview = memo(function CardPreview({
+  entry,
+  width,
+  shakeId,
+  reduce,
+  onPlay,
+  onDetails,
+}: CardPreviewProps) {
   const shake = useSharedValue(0);
   const lastShake = useRef(shakeId);
 
@@ -47,32 +54,42 @@ export const CardPreview = memo(function CardPreview({ entry, width, shakeId, re
   const handleLongPress = useCallback(() => onDetails(uid), [onDetails, uid]);
 
   return (
+    // Entering animation on the wrapper, shake on the inner view: Reanimated
+    // must not animate the same transform from both.
     <Animated.View
       entering={reduce ? undefined : ZoomIn.duration(durations.fast)}
-      style={[styles.root, animatedStyle]}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       testID="card-preview"
     >
-      <GameCard
-        def={entry.def}
-        upgraded={entry.upgraded}
-        size="full"
-        width={width}
-        previewDamage={entry.previewDamage}
-        unaffordable={!entry.affordable}
-        selected
-        onPress={handlePress}
-        onLongPress={handleLongPress}
-      />
-      <AppText variant="caption" tone="secondary" align="center" numberOfLines={1} style={styles.caption}>
-        {entry.affordable ? BATTLE_TEXT.previewHint : BATTLE_TEXT.notEnoughEnergy}
-      </AppText>
+      <Animated.View style={[styles.root, animatedStyle]}>
+        <GameCard
+          def={entry.def}
+          upgraded={entry.upgraded}
+          size="full"
+          width={width}
+          previewDamage={entry.previewDamage}
+          unaffordable={!entry.affordable}
+          selected
+          onPress={handlePress}
+          onLongPress={handleLongPress}
+        />
+        <AppText variant="caption" tone="secondary" align="center" numberOfLines={1} style={styles.caption}>
+          {entry.affordable ? BATTLE_TEXT.previewHint : BATTLE_TEXT.notEnoughEnergy}
+        </AppText>
+      </Animated.View>
     </Animated.View>
   );
 });
 
 const styles = StyleSheet.create({
   root: { alignItems: 'center', gap: spacing.xs },
-  caption: { maxWidth: 280 },
+  caption: {
+    maxWidth: 280,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+    borderRadius: radii.pill,
+    backgroundColor: colors.backdrop,
+    overflow: 'hidden',
+  },
 });
