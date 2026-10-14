@@ -71,7 +71,6 @@ export const newCards = [
     damage: 8,
     era: 'kreide' as const,
     effect: 'Kann nicht blockiert werden',
-    era: 'kreide',
     fact: 'Das größte fliegende Tier das je gelebt hat.',
     emoji: '🦅',
     energyCost: 4,

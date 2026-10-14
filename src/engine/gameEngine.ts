@@ -79,6 +79,11 @@ export function drawCards(state: ExtendedGameState, count: number): ExtendedGame
   return { ...state, deck: newDeck, hand: newHand, discardPile: newDiscard };
 }
 
+// Duplicate copies get ids like `archaeopteryx_2`; effects key off the base id
+function baseId(card: Card): string {
+  return card.id.replace(/_\d+$/, '');
+}
+
 function countAttackersInHand(state: ExtendedGameState): number {
   return state.hand.filter(c => c.type === 'attacker' || c.type === 'hybrid').length;
 }
@@ -92,6 +97,7 @@ export function playCard(state: ExtendedGameState, cardId: string): ExtendedGame
   if (cardIndex === -1) return state;
 
   const card = state.hand[cardIndex];
+  const id = baseId(card);
   if (state.energy < card.energyCost) return state;
 
   const newHand = state.hand.filter((_, i) => i !== cardIndex);
@@ -109,19 +115,18 @@ export function playCard(state: ExtendedGameState, cardId: string): ExtendedGame
   // Velociraptor: 2x damage if it's the only attacker in hand (checked BEFORE playing)
   // We need to check if THIS is the only attacker being played
   const attackersInHand = countAttackersInHand(newState);
-  if (card.id === 'velociraptor' && attackersInHand === 0) {
+  if (id === 'velociraptor' && attackersInHand === 0) {
     finalDamage *= 2;
   }
   
   // Sabelzahnkatze: 40% critical hit chance for 2x damage
-  if (card.id === 'sabelzahntiger') {
+  if (id === 'sabelzahntiger') {
     if (Math.random() < 0.4) {
       finalDamage *= 2;
     }
   }
   
-  // Pteranodon: unblockable - but we don't have block mechanics yet, so just note it
-  // (Block will be bypassed if we add block-ignoring attacks)
+  // Pteranodon: unblockable - enemies have no block yet, so it deals normal damage
 
   // Apply damage
   if (finalDamage > 0) {
@@ -147,59 +152,35 @@ export function playCard(state: ExtendedGameState, cardId: string): ExtendedGame
 
   // Card-specific effects
   // Archaeopteryx: Confuse enemy for 1 turn
-  if (card.id === 'archaeopteryx') {
+  if (id === 'archaeopteryx') {
     newState.enemyConfused = 1;
   }
   
   // Triceratops: +2 block for each plant card in deck (simplified: just +2)
-  if (card.id === 'triceratops') {
+  if (id === 'triceratops') {
     newState.playerBlock += 2;
   }
   
   // Stegosaurus: Gets stronger with plant eaters - simplified bonus
-  if (card.id === 'stegosaurus') {
+  if (id === 'stegosaurus') {
     const plantCards = newState.discardPile.filter(c => c.type === 'support' || c.id === 'uranfarn').length;
     newState.playerBlock += Math.min(plantCards * 2, 6);
   }
   
-  // Mammut: heals when block is high
-  if (card.id === 'mammut' && state.playerBlock >= 5) {
+  // Mammut: heals when block is high (including block from this card)
+  if (id === 'mammut' && newState.playerBlock >= 5) {
     newState.playerHP = Math.min(state.playerMaxHP, newState.playerHP + 3);
   }
   
-  // Pteranodon: piercing damage (ignores 50% of block)
-  if (card.id === 'pteranodon') {
-    const piercingDamage = Math.floor(finalDamage * 0.5);
-    newState.enemyHP = Math.max(0, newState.enemyHP - piercingDamage);
-  }
-  
   // Trilobit: draw a card
-  if (card.id === 'trilobit') {
-    const drawn = drawCardsInternal(newState, 1);
-    newState = { ...newState, hand: drawn.hand, deck: drawn.deck };
+  if (id === 'trilobit') {
+    newState = drawCards(newState, 1);
   }
 
   // Add to discard
-  newState.discardPile = [...state.discardPile, card];
+  newState.discardPile = [...newState.discardPile, card];
 
   return newState;
-}
-
-// Internal draw without extending state
-function drawCardsInternal(state: ExtendedGameState, count: number): ExtendedGameState {
-  let newDeck = [...state.deck];
-  let newHand = [...state.hand];
-
-  for (let i = 0; i < count; i++) {
-    if (newDeck.length === 0) {
-      newDeck = shuffleArray([...state.discardPile]);
-    }
-    if (newDeck.length > 0) {
-      newHand.push(newDeck.pop()!);
-    }
-  }
-
-  return { ...state, deck: newDeck, hand: newHand };
 }
 
 export function endTurn(state: ExtendedGameState): ExtendedGameState {
