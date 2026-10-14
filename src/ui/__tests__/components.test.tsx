@@ -26,20 +26,6 @@ import {
   ToggleRow,
 } from '..';
 
-// Reanimated/worklets/gesture-handler have no native modules under Jest; use
-// the libraries' own mocks (jest.mock calls are hoisted above the imports).
-jest.mock('react-native-worklets', () => jest.requireActual('react-native-worklets/src/mock'));
-jest.mock('react-native-reanimated', () => ({
-  ...jest.requireActual<object>('react-native-reanimated/mock'),
-  useReducedMotion: () => false,
-}));
-jest.mock('react-native-gesture-handler/lib/commonjs/RNGestureHandlerModule', () =>
-  jest.requireActual('react-native-gesture-handler/lib/commonjs/mocks/mocks'),
-);
-jest.mock('react-native-gesture-handler/src/RNGestureHandlerModule', () =>
-  jest.requireActual('react-native-gesture-handler/src/mocks/mocks'),
-);
-
 const METRICS = {
   frame: { x: 0, y: 0, width: 360, height: 780 },
   insets: { top: 24, left: 0, right: 0, bottom: 16 },
