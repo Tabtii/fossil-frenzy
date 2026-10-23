@@ -1,3 +1,4 @@
+import { describeCard } from '@/engine/describe';
 import {
   type CardDef,
   type CardType,
@@ -12,6 +13,7 @@ import {
 } from '@/engine/types';
 import { formatMya, formatNumberDe } from '@/ui/format';
 import { ERA_LABELS, RARITY_LABELS } from '@/ui/labels';
+import { matchesSearch } from './search';
 
 // Pure view models for the fossil book and the card collection. No React, no
 // store access: everything here is unit-tested.
@@ -127,8 +129,11 @@ export function fossilTiles(
   records: Readonly<Record<string, FossilRecord>>,
   filter: EraFilter,
   nowMs: number,
+  query = '',
 ): FossilTile[] {
-  const entries = sortFossils(Object.values(db.fossils).filter((entry) => matchesEra(entry.era, filter)));
+  const entries = sortFossils(Object.values(db.fossils).filter((entry) =>
+    matchesEra(entry.era, filter) && (!query.trim() || (records[entry.id] !== undefined && matchesSearch(query, entry.name, entry.scientificName, entry.foundIn))),
+  ));
   return entries.map((entry): FossilTile => {
     const record = records[entry.id];
     if (!record) return { id: entry.id, era: entry.era, discovered: false };
@@ -320,6 +325,7 @@ export type CollectionRow =
 export interface CollectionFilter {
   era: EraFilter;
   type: TypeFilter;
+  query?: string;
 }
 
 export function cardCounts(db: ContentDB, cardsSeen: readonly string[]): Progress {
@@ -346,7 +352,8 @@ export function collectionRows(
   const seen = new Set(cardsSeen);
   const defs = sortCards(
     Object.values(db.cards).filter(
-      (def) => matchesEra(def.era, filter.era) && (filter.type === 'all' || def.type === filter.type),
+      (def) => matchesEra(def.era, filter.era) && (filter.type === 'all' || def.type === filter.type) &&
+        (!filter.query?.trim() || (seen.has(def.id) && matchesSearch(filter.query, def.name, describeCard(def, false)))),
     ),
   );
   const rows: CollectionRow[] = [];

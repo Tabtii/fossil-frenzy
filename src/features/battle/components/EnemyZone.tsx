@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo } from 'react';
-import { type LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
+import { type LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -17,6 +17,8 @@ import {
   AppText,
   colors,
   FloatingNumbers,
+  FossilArtwork,
+  hasFossilArtwork,
   type FloatingNumberItem,
   IntentBadge,
   Pill,
@@ -193,14 +195,8 @@ export const EnemyZone = memo(function EnemyZone({
       >
         <View style={[styles.emojiBox, sized.box]}>
           <Animated.View style={[styles.glow, sized.glow, glowStyle]} pointerEvents="none" />
-          <Animated.View style={emojiStyle}>
-            <Text
-              style={[styles.emoji, sized.emoji]}
-              allowFontScaling={false}
-              accessible={false}
-            >
-              {def?.emoji ?? '❓'}
-            </Text>
+          <Animated.View style={[emojiStyle, hasFossilArtwork(def?.fossilId) && [sized.box, styles.artwork]]}>
+            <FossilArtwork fossilId={def?.fossilId} emoji={def?.emoji ?? '❓'} emojiStyle={[styles.emoji, sized.emoji]} frame={sized.box} />
           </Animated.View>
           <FloatingNumbers items={numbers} onDone={onNumberDone} reducedMotion={reducedMotion} />
         </View>
@@ -244,8 +240,9 @@ const styles = StyleSheet.create({
   targeting: { borderColor: colors.accentBorder, borderStyle: 'dashed', backgroundColor: colors.accentSoft },
   pressed: { backgroundColor: colors.surfaceRaised },
   emojiBox: { alignItems: 'center', justifyContent: 'center' },
+  artwork: { borderRadius: radii.lg, overflow: 'hidden' },
   glow: { position: 'absolute', backgroundColor: colors.dangerSoft, borderWidth: 2, borderColor: colors.danger },
-  emoji: { textAlign: 'center' },
+  emoji: { textAlign: 'center', color: colors.text },
   nameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, maxWidth: '100%' },
   name: { flexShrink: 1 },
   bar: { width: '82%', maxWidth: 360 },

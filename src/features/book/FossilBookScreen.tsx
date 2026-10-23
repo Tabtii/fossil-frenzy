@@ -7,7 +7,7 @@ import { fossilRoute, ROUTES } from '@/features/navigation';
 import { usePressGuard } from '@/features/shell/hooks';
 import * as haptics from '@/lib/haptics';
 import { useHydrated, useMeta } from '@/state/selectors';
-import { colors, EmptyState, ERA_ICONS, eraColors, Header, Screen, spacing, useLayout } from '@/ui';
+import { colors, EmptyState, ERA_ICONS, eraColors, Header, Screen, SearchField, spacing, useLayout } from '@/ui';
 
 import { FilterChips, type FilterChipOption } from './components/FilterChips';
 import { FossilTile } from './components/FossilTile';
@@ -38,12 +38,13 @@ export function FossilBookScreen() {
   const { fossils: records } = useMeta();
   const { width, contentWidth, innerWidth, gutter, insets } = useLayout();
   const [filter, setFilter] = useState<EraFilter>('all');
+  const [query, setQuery] = useState('');
   const now = useMountTime();
   const guard = usePressGuard();
   const onBack = useBackTo(ROUTES.home);
 
   const counts = useMemo(() => fossilCounts(CONTENT, records), [records]);
-  const tiles = useMemo(() => fossilTiles(CONTENT, records, filter, now), [records, filter, now]);
+  const tiles = useMemo(() => fossilTiles(CONTENT, records, filter, now, query), [records, filter, now, query]);
   const columns = fossilGridColumns(width, contentWidth);
   const tileWidth = gridItemWidth(innerWidth, columns, GAP);
   const progress = counts[filter];
@@ -86,7 +87,10 @@ export function FossilBookScreen() {
   );
 
   const showAll = useCallback(() => onFilter('all'), [onFilter]);
-  const empty = progress.found === 0 ? emptyBookMessage(filter, progress) : null;
+  const searching = query.trim().length > 0;
+  const empty = searching && tiles.length === 0
+    ? { title: 'Keine Treffer', message: 'Suche nach Name, wissenschaftlichem Namen oder Fundort eines entdeckten Fossils.' }
+    : progress.found === 0 ? emptyBookMessage(filter, progress) : null;
 
   const header = <Header title="Fossilienbuch" onBack={onBack} divider />;
 
@@ -109,6 +113,7 @@ export function FossilBookScreen() {
           accessibilityLabel="Nach Erdzeitalter filtern"
           testID="fossil-book-filter"
         />
+        <SearchField value={query} onChangeText={setQuery} placeholder="Entdeckte Fossilien suchen" testID="fossil-book-search" />
       </View>
       {empty ? (
         <View style={[styles.empty, { paddingHorizontal: gutter, paddingBottom: insets.bottom + spacing.lg }]}>
@@ -116,8 +121,8 @@ export function FossilBookScreen() {
             icon="⛏️"
             title={empty.title}
             message={empty.message}
-            actionLabel={filter === 'all' ? undefined : 'Alle Zeitalter zeigen'}
-            onAction={filter === 'all' ? undefined : showAll}
+            actionLabel={searching ? 'Suche löschen' : filter === 'all' ? undefined : 'Alle Zeitalter zeigen'}
+            onAction={searching ? () => setQuery('') : filter === 'all' ? undefined : showAll}
           />
         </View>
       ) : (
@@ -136,6 +141,8 @@ export function FossilBookScreen() {
           maxToRenderPerBatch={12}
           windowSize={7}
           removeClippedSubviews
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
           testID="fossil-book-grid"
         />

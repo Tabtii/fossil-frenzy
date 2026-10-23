@@ -74,6 +74,24 @@ eigene Fixtures).
   `fossilId`. Neue Funde landen im Fossilienbuch (Meta, persistiert).
 - Niederlage → `defeat`, letzter Boss besiegt → `victory`.
 
+## Expeditionscodes und Archivwerkzeuge
+
+- `features/shell/expedition.ts` stellt den vollständigen uint32-Seed als `FF-XXXXXXXX`
+  dar. Ungültige Eingaben werden abgewiesen. Wiederholungen setzen dieselbe Inhaltsversion voraus.
+- Tagesexpeditionen leiten ihren Seed mit den bestehenden RNG-Helfern aus dem
+  **UTC-Kalendertag** ab. Sie verwenden die normalen Spielregeln und denselben
+  Speicherplatz. Eine laufende Expedition wird erst nach Bestätigung ersetzt.
+- `features/map/deckAnalysis.ts` zählt physische Karten einschließlich Duplikaten
+  und berücksichtigt die tatsächlichen Kosten verbesserter Karten.
+- Die Archivsuche durchsucht ausschließlich entdeckte Inhalte und kombiniert sich
+  mit den bestehenden Filtern. Namen und Regeln gesperrter Inhalte bleiben verborgen.
+- Die Speicherprüfung erkennt ungültige Kartenverbindungen, Kampfwerte,
+  Statuseffekte, entfernte Gegnerzüge sowie doppelte oder widersprüchliche Karten-IDs.
+  Wird eine beschädigte Expedition verworfen, bleibt der gültige Meta-Fortschritt erhalten.
+- Bilder liegen ausschließlich in der UI (`ui/components/FossilArtwork.tsx`). Engine
+  und Inhaltsregister bleiben unabhängig von React Native. Ohne Bild oder Entdeckung
+  werden die ursprünglichen Symbole verwendet.
+
 ## Balance-Ziele
 
 - Startdeck 10 Karten, Gegner Trias normal 18–30 LP, Bosse 90–220 LP steigend je Akt.

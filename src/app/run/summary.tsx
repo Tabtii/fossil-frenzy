@@ -6,6 +6,7 @@ import { CONTENT } from '@/data';
 import { eraForAct } from '@/engine/run';
 import type { CardInstance, RunState } from '@/engine/types';
 import { DeckGrid } from '@/features/shell/DeckGrid';
+import { expeditionCode } from '@/features/shell/expedition';
 import { usePressGuard, useSticky } from '@/features/shell/hooks';
 import {
   actLabel,
@@ -101,6 +102,10 @@ export default function SummaryScreen() {
         </>
       }
     >
+      <View>
+        <AppText variant="overline" tone="muted" align="center">DEIN EXPEDITIONSCODE</AppText>
+        <AppText variant="number" tone="accent" align="center" selectable>{expeditionCode(run.seed)}</AppText>
+      </View>
       {headline ? (
         <View style={styles.hero}>
           <Animated.View entering={reduceMotion ? undefined : ZoomIn.duration(durations.slow)}>

@@ -1,14 +1,14 @@
-import { router, useIsFocused } from 'expo-router';
-import { useCallback } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Image, StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import { CONTENT } from '@/data';
 import { ROUTES, routeForScreen } from '@/features/navigation';
 import { confirmAction } from '@/features/shell/confirm';
 import { ContinueButton } from '@/features/shell/ContinueButton';
-import { EraParade } from '@/features/shell/EraParade';
-import { FossilSky } from '@/features/shell/FossilSky';
+import { ExpeditionSetupSheet, type ExpeditionSetupMode } from '@/features/shell/ExpeditionSetupSheet';
+import { FieldGuideSheet } from '@/features/shell/FieldGuideSheet';
 import { usePressGuard } from '@/features/shell/hooks';
 import { MenuTile } from '@/features/shell/MenuTile';
 import {
@@ -24,50 +24,52 @@ import {
 import * as haptics from '@/lib/haptics';
 import { useGameActions, useHydrated, useMeta } from '@/state/selectors';
 import { useGameStore } from '@/state/store';
-import { AppText, Button, colors, ERA_ICONS, fontScale, Screen, spacing, useLayout, useReduceMotion } from '@/ui';
-
-const TITLE_MAX_SIZE = 46;
+import { AppText, Button, colors, ERA_ICONS, IconButton, radii, Screen, spacing, useLayout } from '@/ui';
 
 export default function HomeScreen() {
   const hydrated = useHydrated();
   const meta = useMeta();
   const overview = useGameStore(useShallow((state) => runOverview(state.run)));
   const { newRun, finishRun } = useGameActions();
-  const { innerWidth, isCompact, fontScale: systemFontScale } = useLayout();
+  const { isCompact, fontScale: systemFontScale } = useLayout();
   // Two tiles side by side truncate their titles on small phones or large text.
   const stackTiles = isCompact || systemFontScale >= 1.3;
-  const focused = useIsFocused();
-  const reduceMotion = useReduceMotion(meta.settings.reducedMotion);
-  const animate = focused && !reduceMotion;
   const guard = usePressGuard();
+  const [setupMode, setSetupMode] = useState<ExpeditionSetupMode>(null);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   const fossils = fossilProgress(meta.fossils, CONTENT);
   const cards = cardProgress(meta.cardsSeen, CONTENT);
   const activeRun = overview?.status === 'active';
 
-  const startRun = useCallback(() => {
+  const startRun = useCallback((seed?: number) => {
     const previous = useGameStore.getState().run;
     // A finished but not yet closed run (e.g. app closed on the summary) still counts.
     if (previous && (previous.screen.type === 'victory' || previous.screen.type === 'defeat')) finishRun();
-    newRun();
+    newRun(seed);
     const run = useGameStore.getState().run;
     if (!run || run === previous) return;
     haptics.selection();
     router.push(routeForScreen(run.screen));
   }, [finishRun, newRun]);
 
-  const onNewRun = useCallback(() => {
+  const requestRun = useCallback((seed?: number) => {
+    const start = () => {
+      setSetupMode(null);
+      startRun(seed);
+    };
     if (!activeRun || !overview) {
-      guard(startRun);
+      guard(start);
       return;
     }
     confirmAction({
       title: 'Neue Expedition starten?',
       message: `Deine laufende Expedition (${runOverviewCaption(overview)}) wird abgebrochen und kann nicht fortgesetzt werden.`,
       confirmLabel: 'Neu starten',
-      onConfirm: () => guard(startRun),
+      onConfirm: () => guard(start),
     });
   }, [activeRun, overview, guard, startRun]);
+  const onNewRun = useCallback(() => requestRun(), [requestRun]);
 
   const onContinue = useCallback(() => {
     guard(() => {
@@ -90,10 +92,6 @@ export default function HomeScreen() {
   const onFossils = useCallback(() => open(ROUTES.fossils), [open]);
   const onCollection = useCallback(() => open(ROUTES.collection), [open]);
   const onSettings = useCallback(() => open(ROUTES.settings), [open]);
-
-  // Font size ≈ column width / 7.8 keeps the bold "Fossil Frenzy" on one line from 320 dp up.
-  const titleSize = Math.min(TITLE_MAX_SIZE, Math.floor(innerWidth / 7.8));
-  const titleStyle = { fontSize: titleSize, lineHeight: Math.round(titleSize * 1.18) };
 
   const footer = (
     <>
@@ -119,6 +117,38 @@ export default function HomeScreen() {
         accessibilityHint={activeRun ? 'Bricht die laufende Expedition nach einer Rückfrage ab.' : undefined}
         testID="home-new-run"
       />
+    </>
+  );
+
+  return (
+    <Screen scroll
+      header={
+        <View style={styles.masthead}>
+          <View style={styles.brand}>
+            <AppText variant="overline" tone="muted">DEIN EXPEDITIONSLAGER</AppText>
+            <AppText variant="title" accessibilityRole="header"><AppText variant="title" tone="accent">Fossil</AppText> Frenzy</AppText>
+          </View>
+          <IconButton icon="⚙️" accessibilityLabel="Einstellungen" onPress={onSettings} testID="home-settings" />
+        </View>
+      }
+      contentStyle={styles.body}
+      footer={footer}
+    >
+      <View style={styles.hero}>
+        <Image source={require('../../assets/art/expedition-valley.webp')} resizeMode="cover" style={[StyleSheet.absoluteFill, styles.heroImage]} accessible={false} />
+        <View style={styles.heroCaption}>
+          <AppText variant="overline" tone="accent">EIN DECK. MILLIONEN JAHRE.</AppText>
+          <AppText variant="heading">Die Urzeit wartet auf dich.</AppText>
+          <AppText variant="caption" tone="secondary">4 Zeitalter · {Object.keys(CONTENT.cards).length} Karten · dein Weg</AppText>
+        </View>
+      </View>
+      <AppText variant="label" tone="muted" accessibilityLabel={homeStatsAccessibilityLabel(meta)}>
+        {homeStatsText(meta)}
+      </AppText>
+      <View style={styles.sectionHeading}>
+        <AppText variant="subheading">Deine Entdeckungen</AppText>
+        <AppText variant="overline" tone="accent">FELDARCHIV</AppText>
+      </View>
       <View style={stackTiles ? styles.tilesStacked : styles.tiles}>
         <MenuTile
           icon="📖"
@@ -137,54 +167,32 @@ export default function HomeScreen() {
           testID="home-collection"
         />
       </View>
-      <Button label="Einstellungen" icon="⚙️" variant="ghost" fullWidth onPress={onSettings} testID="home-settings" />
-    </>
-  );
-
-  return (
-    <View style={styles.root}>
-      <FossilSky active={animate} />
-      <Screen scroll backgroundColor={colors.transparent} contentStyle={styles.body} footer={footer}>
-        <View style={styles.hero}>
-          <EraParade width={innerWidth} active={animate} />
-          <AppText
-            variant="display"
-            align="center"
-            accessibilityRole="header"
-            style={titleStyle}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.6}
-            maxFontSizeMultiplier={fontScale.badge}
-          >
-            <AppText variant="display" tone="accent" style={titleStyle} maxFontSizeMultiplier={fontScale.badge}>
-              Fossil
-            </AppText>{' '}
-            Frenzy
-          </AppText>
-          <AppText variant="subheading" tone="secondary" align="center">
-            Grabe dich durch über 250 Millionen Jahre Erdgeschichte – von der Trias bis zur Eiszeit.
-          </AppText>
+      <View style={styles.expeditions}>
+        <AppText variant="overline" tone="accent">NEUE SPUREN</AppText>
+        <AppText variant="subheading">Ein neuer Tag. Eine neue Expedition.</AppText>
+        <AppText variant="caption" tone="secondary">Erkunde die Tageswelt oder folge einem Expeditionscode.</AppText>
+        <View style={stackTiles ? styles.tilesStacked : styles.tiles}>
+          <Button label="Heute spielen" variant="secondary" disabled={!hydrated} onPress={() => setSetupMode('daily')} style={styles.flex} testID="home-daily" />
+          <Button label="Mit Code" variant="ghost" accessibilityLabel="Expeditionscode eingeben" disabled={!hydrated} onPress={() => setSetupMode('code')} style={styles.flex} testID="home-code" />
         </View>
-        <AppText
-          variant="label"
-          tone="muted"
-          align="center"
-          accessibilityLabel={homeStatsAccessibilityLabel(meta)}
-          style={styles.stats}
-        >
-          {homeStatsText(meta)}
-        </AppText>
-      </Screen>
-    </View>
+      </View>
+      <Button label="So spielst du Fossil Frenzy" icon="📒" variant="ghost" onPress={() => setGuideOpen(true)} fullWidth testID="home-guide" />
+      <ExpeditionSetupSheet mode={setupMode} onClose={() => setSetupMode(null)} onStart={requestRun} reducedMotion={meta.settings.reducedMotion} />
+      <FieldGuideSheet visible={guideOpen} onClose={() => setGuideOpen(false)} reducedMotion={meta.settings.reducedMotion} />
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background },
-  body: { justifyContent: 'center', gap: spacing.xl, paddingTop: spacing.xl },
-  hero: { alignItems: 'center', gap: spacing.md },
-  stats: { paddingHorizontal: spacing.sm },
+  masthead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingVertical: spacing.lg },
+  brand: { flex: 1, gap: spacing.xxs },
+  body: { gap: spacing.lg, paddingTop: spacing.xs },
+  hero: { aspectRatio: 1.42, borderRadius: radii.xl, overflow: 'hidden', borderWidth: 1, borderColor: colors.borderStrong, justifyContent: 'flex-end', backgroundColor: colors.surface },
+  heroImage: { width: '100%', height: '100%' },
+  heroCaption: { padding: spacing.lg, gap: spacing.xs, backgroundColor: colors.artCaption },
+  sectionHeading: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.xs },
+  expeditions: { gap: spacing.sm, padding: spacing.lg, borderRadius: radii.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  flex: { flex: 1 },
   tiles: { flexDirection: 'row', gap: spacing.sm },
   tilesStacked: { gap: spacing.sm },
   tileStacked: { flex: 0 },

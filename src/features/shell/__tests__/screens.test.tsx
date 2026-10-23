@@ -10,6 +10,7 @@ import HomeScreen from '@/app/index';
 import SettingsScreen from '@/app/settings';
 import { CONTENT } from '@/data';
 import { createRun } from '@/engine/run';
+import { dailyExpedition } from '../expedition';
 import type { RunState } from '@/engine/types';
 import { initialMeta } from '@/state/meta';
 import { useGameStore, waitForHydration } from '@/state/store';
@@ -120,6 +121,34 @@ function confirmButton(buttons: AlertButton[] | undefined): AlertButton {
 }
 
 describe('home screen', () => {
+  it('starts a daily expedition from the existing rules and opens the field guide', () => {
+    const r = render(<HomeScreen />);
+    press(r.root, 'home-guide');
+    expect(textOf(r.root)).toContain('Drei Energie. Fünf Karten.');
+    press(r.root, 'home-daily');
+    expect(textOf(r.root)).toContain('Gleiche Welt. Dein eigener Weg.');
+    press(r.root, 'expedition-code-start');
+    expect(useGameStore.getState().run?.seed).toBe(dailyExpedition(new Date()).seed);
+  });
+
+  it('validates an expedition code and protects the current run before replacing it', () => {
+    const previous = createRun(CONTENT, 17);
+    useGameStore.setState({ run: previous });
+    const alerts = spyAlerts();
+    const r = render(<HomeScreen />);
+    press(r.root, 'home-code');
+    press(r.root, 'expedition-code-start');
+    expect(textOf(r.root)).toContain('Bitte gib einen vollständigen Code');
+    expect(useGameStore.getState().run).toBe(previous);
+    const input = r.root.find((n) => n.props.testID === 'expedition-code-input' && n.props.onChangeText);
+    act(() => (input.props.onChangeText as (value: string) => void)('FF-0000002A'));
+    press(r.root, 'expedition-code-start');
+    expect(alerts).toHaveLength(1);
+    expect(useGameStore.getState().run).toBe(previous);
+    act(() => confirmButton(alerts[0]).onPress?.());
+    expect(useGameStore.getState().run?.seed).toBe(42);
+  });
+
   it('starts a first expedition without a dialog', () => {
     const r = render(<HomeScreen />);
     const shown = textOf(r.root);

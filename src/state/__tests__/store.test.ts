@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { CONTENT } from '@/data';
 import { canPlay } from '@/engine/combat';
-import { availableNodes, createRun, currentNode, deckFossils } from '@/engine/run';
+import { availableNodes, createRun, currentNode, deckFossils, enterNode as engineEnterNode } from '@/engine/run';
 import type { RunState } from '@/engine/types';
 import { initialMeta } from '../meta';
 import { selectCombat } from '../selectors';
@@ -163,6 +163,50 @@ describe('hydration', () => {
 });
 
 describe('sanitizing', () => {
+  function combatRun(): RunState {
+    const run = createRun(CONTENT, SEED);
+    return engineEnterNode(CONTENT, run, availableNodes(run)[0]!.id);
+  }
+
+  it('restores a real in-progress battle without replaying animation events', () => {
+    const run = combatRun();
+    const restored = sanitizeRun(JSON.parse(JSON.stringify(run)));
+    expect(restored).not.toBeNull();
+    if (run.screen.type !== 'combat' || restored?.screen.type !== 'combat') throw new Error('expected combat');
+    expect(restored.screen.combat).toEqual({ ...run.screen.combat, events: [] });
+  });
+
+  it.each([{ hp: -1 }, { hp: 61 }, { maxHp: 0 }, { act: 0.5 }, { seed: -1 }, { rngState: 0x100000000 }, { nextUid: 1.5 }])('rejects invalid saved numeric state %j', (patch) => {
+    expect(sanitizeRun({ ...createRun(CONTENT, SEED), ...patch })).toBeNull();
+  });
+
+  it('rejects broken map links, duplicate card identities and inherited content names', () => {
+    const run = createRun(CONTENT, SEED);
+    expect(sanitizeRun({ ...run, map: run.map.map((node, i) => i === 0 ? { ...node, next: ['missing-node'] } : node) })).toBeNull();
+    expect(sanitizeRun({ ...run, deck: [...run.deck, run.deck[0]] })).toBeNull();
+    expect(sanitizeRun({ ...run, deck: [{ uid: 'fake', defId: 'constructor', upgraded: false }] })).toBeNull();
+    expect(sanitizeRun({ ...run, visited: ['missing-node'] })).toBeNull();
+  });
+
+  it('rejects invalid enemy moves, status amounts and duplicated combat piles', () => {
+    const run = combatRun();
+    if (run.screen.type !== 'combat') throw new Error('expected combat');
+    const { combat } = run.screen;
+    const withCombat = (patch: object) => ({ ...run, screen: { ...run.screen, combat: { ...combat, ...patch } } });
+    expect(sanitizeRun(withCombat({ enemy: { ...combat.enemy, nextMoveId: 'removed-move' } }))).toBeNull();
+    expect(sanitizeRun(withCombat({ player: { ...combat.player, statuses: { bleed: 'many' } } }))).toBeNull();
+    expect(sanitizeRun(withCombat({ player: { ...combat.player, block: -10 } }))).toBeNull();
+    expect(sanitizeRun(withCombat({ discardPile: [combat.hand[0]!] }))).toBeNull();
+    expect(sanitizeRun(withCombat({ hand: [] }))).toBeNull();
+  });
+
+  it('preserves the fossil book when a broken expedition must be discarded', () => {
+    const meta = { ...initialMeta(), runsStarted: 12, runsWon: 3 };
+    const result = sanitizePersisted({ run: { ...createRun(CONTENT, SEED), hp: -1 }, meta });
+    expect(result.run).toBeNull();
+    expect(result.meta).toEqual(meta);
+  });
+
   it('keeps a valid run intact (JSON round trip)', () => {
     const run = createRun(CONTENT, SEED);
     expect(sanitizeRun(JSON.parse(JSON.stringify(run)))).toEqual(run);

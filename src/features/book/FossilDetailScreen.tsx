@@ -17,6 +17,7 @@ import {
   eraColors,
   FOSSIL_KIND_LABELS,
   formatLength,
+  FossilArtwork,
   GameCard,
   Header,
   ListRow,
@@ -130,9 +131,7 @@ function FoundDetail({
     <>
       <Surface style={[styles.hero, { borderColor: tone.main }]}>
         <View style={[styles.heroArt, { backgroundColor: tone.soft }]}>
-          <Text style={styles.heroEmoji} allowFontScaling={false} accessible={false}>
-            {entry.emoji}
-          </Text>
+          <FossilArtwork fossilId={entry.id} emoji={entry.emoji} emojiStyle={styles.heroEmoji} />
         </View>
         <AppText variant="title" align="center" accessibilityRole="header">
           {entry.name}
@@ -301,6 +300,7 @@ const styles = StyleSheet.create({
   hero: { alignItems: 'center', gap: spacing.sm, borderWidth: 1 },
   lockedHero: { borderStyle: 'dashed', borderColor: colors.borderStrong },
   heroArt: {
+    overflow: 'hidden',
     width: 128,
     height: 128,
     borderRadius: radii.xl,
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: spacing.xs,
   },
-  heroEmoji: { fontSize: 72, lineHeight: 86 },
+  heroEmoji: { fontSize: 72, lineHeight: 86, color: colors.text },
   silhouette: { opacity: 0.5 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.xs },
   center: { alignSelf: 'center' },

@@ -15,6 +15,14 @@ dein Fossilienbuch mit echten paläontologischen Fakten.
 - **Mobile First**: Hochformat, Daumenzone, Safe Areas, 320–430 dp, Haptik,
   reduzierte Bewegung, Screenreader-Labels
 - Spielstand wird automatisch gespeichert (Expedition fortsetzen jederzeit möglich)
+- **Expeditionslager** im Wald-/Amber-Design mit lokal gebündelten Illustrationen;
+  die drei Starterkarten tragen eigene Motive, auch im Fossilienbuch
+- **Tagesexpedition** mit weltweitem UTC-Tagescode und **Expeditionscodes** zum
+  Wiederholen derselben Ausgangslage innerhalb derselben Spielversion
+- **Deckanalyse** mit Energiekurve, tatsächlichen Verbesserungskosten,
+  Kartentypen und zusammengefassten Duplikaten
+- **Archivsuche** nach entdeckten Karten/Effekten bzw. Fossilien/Fundorten
+- **Expeditionshandbuch** erklärt Kampf, Deckbau und Fortschritt direkt im Lager
 
 ## Tech Stack
 
@@ -22,6 +30,8 @@ Expo SDK 57 · React Native 0.86 · Expo Router · TypeScript · zustand · Rean
 Gesture Handler · Jest
 
 Architektur und Spielregeln: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+
+Bildquellen und verwendete Generierungsprompts: [`docs/ARTWORK.md`](docs/ARTWORK.md).
 
 ## Entwicklung
 
@@ -45,6 +55,12 @@ Builds für die Stores laufen über EAS (`npx eas-cli@latest build`).
 3. **Lange drücken** zeigt Details und den Fossil-Fakt zur Karte.
 4. Die Anzeige über dem Gegner verrät seinen nächsten Zug — Block lohnt sich bei ⚔️.
 5. Nach jedem Sieg eine neue Karte wählen, an Rastplätzen heilen oder Karten verbessern.
+6. Auf der Karte das Deck öffnen: Energiekurve prüfen und den Expeditionscode
+   auswählen/kopieren. Mit „Mit Code“ im Lager lässt sich die Ausgangslage erneut spielen.
+
+Die Tagesexpedition verwendet die bestehenden Spielregeln und wechselt um
+00:00 UTC. Eine laufende Expedition bleibt bis zu deiner ausdrücklichen Bestätigung
+erhalten, wenn du einen neuen oder anderen Code starten möchtest.
 
 ## Lizenz
 

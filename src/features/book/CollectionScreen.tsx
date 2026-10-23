@@ -18,6 +18,7 @@ import {
   GameCard,
   Header,
   Screen,
+  SearchField,
   spacing,
   useLayout,
 } from '@/ui';
@@ -105,6 +106,7 @@ export function CollectionScreen() {
   const { contentWidth, innerWidth, gutter, insets } = useLayout();
   const [eraFilter, setEraFilter] = useState<EraFilter>('all');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+  const [query, setQuery] = useState('');
   const sheet = useCardSheet();
   const onBack = useBackTo(ROUTES.home);
 
@@ -112,8 +114,8 @@ export function CollectionScreen() {
   const cardWidth = gridItemWidth(innerWidth, columns, GAP);
   const total = useMemo(() => cardCounts(CONTENT, meta.cardsSeen), [meta.cardsSeen]);
   const rows = useMemo(
-    () => collectionRows(CONTENT, meta.cardsSeen, { era: eraFilter, type: typeFilter }, columns),
-    [meta.cardsSeen, eraFilter, typeFilter, columns],
+    () => collectionRows(CONTENT, meta.cardsSeen, { era: eraFilter, type: typeFilter, query }, columns),
+    [meta.cardsSeen, eraFilter, typeFilter, query, columns],
   );
 
   const onEra = useCallback((value: EraFilter) => {
@@ -128,6 +130,7 @@ export function CollectionScreen() {
     haptics.selection();
     setEraFilter('all');
     setTypeFilter('all');
+    setQuery('');
   }, []);
 
   const renderItem: ListRenderItem<CollectionRow> = useCallback(
@@ -167,6 +170,7 @@ export function CollectionScreen() {
     <Screen header={header} padded={false} contentStyle={styles.body} testID="collection">
       <View style={[styles.top, { paddingHorizontal: gutter }]}>
         <ProgressBar icon="🃏" progress={total} label={cardCounterText(total)} testID="collection-progress" />
+        <SearchField value={query} onChangeText={setQuery} placeholder="Entdeckte Karten oder Effekte suchen" testID="collection-search" />
         <FilterChips
           options={ERA_OPTIONS}
           value={eraFilter}
@@ -190,8 +194,8 @@ export function CollectionScreen() {
         ListEmptyComponent={
           <EmptyState
             icon="🃏"
-            title="Keine Karten"
-            message="Für diese Auswahl gibt es keine Karten."
+            title={query.trim() ? 'Keine Treffer' : 'Keine Karten'}
+            message={query.trim() ? 'Suche nach dem Namen oder einem Effekt einer bereits entdeckten Karte.' : 'Für diese Auswahl gibt es keine Karten.'}
             actionLabel="Filter zurücksetzen"
             onAction={resetFilters}
           />
@@ -200,6 +204,8 @@ export function CollectionScreen() {
         maxToRenderPerBatch={8}
         windowSize={7}
         removeClippedSubviews
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
         testID="collection-grid"
       />

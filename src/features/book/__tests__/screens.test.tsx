@@ -149,6 +149,19 @@ describe('fossil detail', () => {
 });
 
 describe('collection', () => {
+  it('searches and clears discovered cards without revealing locked cards', () => {
+    discover(['eoraptor']);
+    const r = render(<CollectionScreen />);
+    const input = r.root.find((n) => n.props.testID === 'collection-search' && n.props.onChangeText);
+    act(() => (input.props.onChangeText as (value: string) => void)('eoraptor'));
+    expect(r.root.findAll((n) => n.props.testID === 'collection-locked-triceratops')).toHaveLength(0);
+    expect(textOf(r.root)).toContain('Eoraptor');
+    act(() => (input.props.onChangeText as (value: string) => void)('gibt-es-nicht'));
+    expect(textOf(r.root)).toContain('Keine Treffer');
+    press(r.root, 'collection-search-clear');
+    expect(textOf(r.root)).not.toContain('Keine Treffer');
+  });
+
   it('counts seen cards and opens the detail sheet', () => {
     discover(['eoraptor']);
     const r = render(<CollectionScreen />);

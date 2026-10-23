@@ -71,6 +71,6 @@ const styles = StyleSheet.create({
   },
   pressed: { backgroundColor: colors.surfacePressed, transform: [{ scale: 0.98 }] },
   disabled: { opacity: opacity.disabled },
-  icon: { fontSize: 26, lineHeight: 32 },
+  icon: { fontSize: 26, lineHeight: 32, color: colors.text },
   texts: { flex: 1, minWidth: 0, gap: spacing.xxs },
 });

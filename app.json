@@ -7,7 +7,7 @@
     "icon": "./assets/icon.png",
     "scheme": "fossilfrenzy",
     "userInterfaceStyle": "dark",
-    "backgroundColor": "#14121F",
+    "backgroundColor": "#0D191A",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tabtii.fossilfrenzy"
@@ -15,7 +15,7 @@
     "android": {
       "package": "com.tabtii.fossilfrenzy",
       "adaptiveIcon": {
-        "backgroundColor": "#14121F",
+        "backgroundColor": "#0D191A",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -32,7 +32,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#14121F",
+          "backgroundColor": "#0D191A",
           "image": "./assets/splash-icon.png",
           "imageWidth": 120
         }

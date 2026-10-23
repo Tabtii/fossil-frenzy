@@ -82,12 +82,21 @@ function isNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
+function isNatural(value: unknown): value is number {
+  return isNumber(value) && Number.isSafeInteger(value) && value >= 0;
+}
+
+function hasContent(registry: object, id: string): boolean {
+  return Object.prototype.hasOwnProperty.call(registry, id);
+}
+
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string');
 }
 
 const NODE_TYPES = new Set(['fight', 'elite', 'rest', 'dig', 'boss']);
 const PHASES = new Set(['player', 'won', 'lost']);
+const STATUSES = new Set(['strength', 'vulnerable', 'weak', 'bleed', 'confused']);
 
 function isCardList(value: unknown, db: ContentDB): value is CardInstance[] {
   return (
@@ -95,72 +104,86 @@ function isCardList(value: unknown, db: ContentDB): value is CardInstance[] {
     value.every(
       (card) =>
         isRecord(card) &&
-        typeof card.uid === 'string' &&
+        typeof card.uid === 'string' && card.uid.length > 0 &&
         typeof card.defId === 'string' &&
         typeof card.upgraded === 'boolean' &&
-        db.cards[card.defId] !== undefined,
-    )
+        hasContent(db.cards, card.defId),
+    ) && new Set(value.map((card) => card.uid)).size === value.length
   );
 }
 
 function isCardChoices(value: unknown, db: ContentDB): value is string[] {
-  return isStringArray(value) && value.every((id) => db.cards[id] !== undefined);
+  return isStringArray(value) && value.every((id) => hasContent(db.cards, id));
 }
 
 function isMap(value: unknown, db: ContentDB): value is MapNode[] {
-  return (
+  const valid = (
     Array.isArray(value) &&
     value.length > 0 &&
     value.every(
       (node) =>
         isRecord(node) &&
-        typeof node.id === 'string' &&
-        isNumber(node.floor) &&
-        isNumber(node.lane) &&
+        typeof node.id === 'string' && node.id.length > 0 &&
+        isNatural(node.floor) &&
+        isNatural(node.lane) &&
         typeof node.type === 'string' &&
         NODE_TYPES.has(node.type) &&
         isStringArray(node.next) &&
         (node.enemyId === undefined ||
-          (typeof node.enemyId === 'string' && db.enemies[node.enemyId] !== undefined)),
+          (typeof node.enemyId === 'string' && hasContent(db.enemies, node.enemyId))),
     )
+  );
+  if (!valid) return false;
+  const nodes = value as MapNode[];
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  return byId.size === nodes.length && nodes.every((node) =>
+    node.next.every((id) => byId.get(id)?.floor === node.floor + 1) &&
+    (!['fight', 'elite', 'boss'].includes(node.type) || node.enemyId !== undefined),
   );
 }
 
 function isCombatant(value: unknown): boolean {
   return (
     isRecord(value) &&
-    isNumber(value.hp) &&
-    isNumber(value.maxHp) &&
-    isNumber(value.block) &&
-    isRecord(value.statuses)
+    isNatural(value.hp) &&
+    isNatural(value.maxHp) && value.maxHp > 0 && value.hp <= value.maxHp &&
+    isNatural(value.block) &&
+    isRecord(value.statuses) &&
+    Object.entries(value.statuses).every(([key, amount]) => STATUSES.has(key) && isNatural(amount))
   );
 }
 
 function isCombat(value: unknown, db: ContentDB): value is CombatState {
   if (!isRecord(value)) return false;
   const { enemy } = value;
-  return (
+  const valid = (
     isCombatant(value.player) &&
     isCombatant(enemy) &&
     isRecord(enemy) &&
     typeof enemy.defId === 'string' &&
-    db.enemies[enemy.defId] !== undefined &&
+    hasContent(db.enemies, enemy.defId) &&
     typeof enemy.nextMoveId === 'string' &&
     isStringArray(enemy.history) &&
     isCardList(value.drawPile, db) &&
     isCardList(value.hand, db) &&
     isCardList(value.discardPile, db) &&
     isCardList(value.exhaustPile, db) &&
-    isNumber(value.energy) &&
-    isNumber(value.maxEnergy) &&
-    isNumber(value.turn) &&
-    isNumber(value.cardsPlayedThisTurn) &&
-    isNumber(value.attacksPlayedThisTurn) &&
+    isNatural(value.energy) &&
+    isNatural(value.maxEnergy) && value.maxEnergy > 0 &&
+    isNatural(value.turn) && value.turn > 0 &&
+    isNatural(value.cardsPlayedThisTurn) &&
+    isNatural(value.attacksPlayedThisTurn) &&
     typeof value.phase === 'string' &&
     PHASES.has(value.phase) &&
-    isNumber(value.rngState) &&
+    isNatural(value.rngState) && value.rngState <= 0xffffffff &&
     Array.isArray(value.events)
   );
+  if (!valid) return false;
+  const combat = value as unknown as CombatState;
+  const def = db.enemies[combat.enemy.defId]!;
+  if (!def.moves.some((move) => move.id === combat.enemy.nextMoveId)) return false;
+  const cards = [...combat.hand, ...combat.drawPile, ...combat.discardPile, ...combat.exhaustPile];
+  return new Set(cards.map((card) => card.uid)).size === cards.length;
 }
 
 function isScreen(value: unknown, db: ContentDB, nodeIds: Set<string>): value is RunScreen {
@@ -171,7 +194,7 @@ function isScreen(value: unknown, db: ContentDB, nodeIds: Set<string>): value is
     case 'victory':
       return true;
     case 'actComplete':
-      return isNumber(value.act);
+      return isNatural(value.act) && value.act < ACT_COUNT;
     case 'rest':
     case 'defeat':
       return hasNode;
@@ -218,15 +241,24 @@ function sanitizeStats(raw: unknown): RunStats {
 export function sanitizeRun(raw: unknown, db: ContentDB = CONTENT): RunState | null {
   if (!isRecord(raw)) return null;
   const { seed, rngState, act, hp, maxHp, nextUid, map, currentNodeId, visited, deck, screen } = raw;
-  if (!isNumber(seed) || !isNumber(rngState) || !isNumber(nextUid)) return null;
-  if (!isNumber(act) || act < 0 || act >= ACT_COUNT) return null;
-  if (!isNumber(hp) || !isNumber(maxHp) || maxHp <= 0) return null;
+  if (!isNatural(seed) || seed > 0xffffffff || !isNatural(rngState) || rngState > 0xffffffff || !isNatural(nextUid)) return null;
+  if (!isNatural(act) || act >= ACT_COUNT) return null;
+  if (!isNatural(hp) || !isNatural(maxHp) || maxHp <= 0 || hp > maxHp) return null;
   if (!isMap(map, db) || !isStringArray(visited) || !isCardList(deck, db)) return null;
   const nodeIds = new Set(map.map((node) => node.id));
+  if (!visited.every((id) => nodeIds.has(id))) return null;
   if (currentNodeId !== null && !(typeof currentNodeId === 'string' && nodeIds.has(currentNodeId))) {
     return null;
   }
   if (!isScreen(screen, db, nodeIds)) return null;
+  if (screen.type === 'combat') {
+    const cards = [...screen.combat.hand, ...screen.combat.drawPile, ...screen.combat.discardPile, ...screen.combat.exhaustPile];
+    const owned = new Map(deck.map((card) => [card.uid, card]));
+    if (cards.length !== deck.length || cards.some((card) => {
+      const original = owned.get(card.uid);
+      return !original || original.defId !== card.defId || original.upgraded !== card.upgraded;
+    })) return null;
+  }
   // Events only describe the last action before saving; never replay them.
   const loadedScreen: RunScreen =
     screen.type === 'combat' ? { ...screen, combat: { ...screen.combat, events: [] } } : screen;

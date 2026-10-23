@@ -1,5 +1,5 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -37,6 +37,8 @@ export interface BottomSheetProps {
   showCloseButton?: boolean;
   /** App setting; the OS setting is respected automatically. */
   reducedMotion?: boolean;
+  /** Keep text entry and fixed actions above the software keyboard. */
+  avoidKeyboard?: boolean;
   /** Spoken name of the sheet (defaults to the title). */
   accessibilityLabel?: string;
   testID?: string;
@@ -62,6 +64,7 @@ export function BottomSheet({
   dismissible = true,
   showCloseButton,
   reducedMotion = false,
+  avoidKeyboard = false,
   accessibilityLabel,
   testID,
 }: BottomSheetProps) {
@@ -150,7 +153,7 @@ export function BottomSheet({
             accessibilityElementsHidden={!dismissible}
           />
         </Animated.View>
-        <View style={styles.anchor} pointerEvents="box-none">
+        <KeyboardAvoidingView style={styles.anchor} pointerEvents="box-none" enabled={avoidKeyboard} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <Animated.View
             style={[styles.sheet, { maxHeight }, sheetStyle]}
             onLayout={(event) => sheetHeight.set(event.nativeEvent.layout.height)}
@@ -182,6 +185,7 @@ export function BottomSheet({
                 contentContainerStyle={[styles.bodyContent, !footer && { paddingBottom: bottomPadding }]}
                 showsVerticalScrollIndicator={false}
                 bounces={false}
+                keyboardShouldPersistTaps="handled"
               >
                 {children}
               </ScrollView>
@@ -190,7 +194,7 @@ export function BottomSheet({
             )}
             {footer ? <View style={[styles.footer, { paddingBottom: bottomPadding }]}>{footer}</View> : null}
           </Animated.View>
-        </View>
+        </KeyboardAvoidingView>
       </GestureHandlerRootView>
     </Modal>
   );
@@ -201,6 +205,7 @@ const styles = StyleSheet.create({
   backdrop: { ...fill, backgroundColor: colors.backdrop },
   anchor: { flex: 1, justifyContent: 'flex-end', alignItems: 'center' },
   sheet: {
+    flexShrink: 1,
     width: '100%',
     maxWidth: sizes.maxContentWidth,
     backgroundColor: colors.surface,
