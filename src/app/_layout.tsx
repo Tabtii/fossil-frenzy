@@ -11,6 +11,7 @@ import {
   RUN_GROUP_OPTIONS,
 } from '@/features/shell/navigationOptions';
 import { keepSplashScreen, useHideSplashWhenReady } from '@/features/shell/splash';
+import { SaveStatusNotice } from '@/features/shell/SaveStatusNotice';
 import { useHydrated } from '@/state/selectors';
 import { colors } from '@/ui';
 
@@ -32,6 +33,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <ThemeProvider value={NAVIGATION_THEME}>
         <StatusBar style="light" />
+        <SaveStatusNotice />
         <Stack screenOptions={ROOT_STACK_OPTIONS}>
           <Stack.Screen name="index" options={HOME_SCREEN_OPTIONS} />
           <Stack.Screen name="settings" />

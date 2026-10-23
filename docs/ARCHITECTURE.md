@@ -88,6 +88,11 @@ eigene Fixtures).
 - Die Speicherprüfung erkennt ungültige Kartenverbindungen, Kampfwerte,
   Statuseffekte, entfernte Gegnerzüge sowie doppelte oder widersprüchliche Karten-IDs.
   Wird eine beschädigte Expedition verworfen, bleibt der gültige Meta-Fortschritt erhalten.
+- Tatsächliche Speicherfehler werden in einem separaten, nicht persistierten
+  Status-Store gemeldet, damit die Fehlermeldung keine weitere Speicherung auslöst.
+  Ein erneuter Speicherversuch schreibt den aktuellen Arbeitsspeicherstand; nach
+  einem Lesefehler bleibt das Überschreiben des bestehenden Spielstands gesperrt.
+  Verspätete Antworten älterer Schreibvorgänge verdecken keinen neueren Fehler.
 - Bilder liegen ausschließlich in der UI (`ui/components/FossilArtwork.tsx`). Engine
   und Inhaltsregister bleiben unabhängig von React Native. Ohne Bild oder Entdeckung
   werden die ursprünglichen Symbole verwendet.

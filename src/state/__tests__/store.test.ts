@@ -6,6 +6,7 @@ import { canPlay } from '@/engine/combat';
 import { availableNodes, createRun, currentNode, deckFossils, enterNode as engineEnterNode } from '@/engine/run';
 import type { RunState } from '@/engine/types';
 import { initialMeta } from '../meta';
+import { useSaveStatus } from '../saveStatus';
 import { selectCombat } from '../selectors';
 import {
   STORAGE_KEY,
@@ -15,6 +16,7 @@ import {
   useGameStore,
   resetStorageGuard,
   waitForHydration,
+  retrySave,
 } from '../store';
 
 // Store tests run against the real engine and the real CONTENT registry. They
@@ -71,6 +73,44 @@ afterEach(() => {
 });
 
 describe('hydration', () => {
+  it('contains failed writes, keeps the active run and retries the latest snapshot', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    jest.mocked(AsyncStorage.setItem).mockRejectedValueOnce(new Error('storage full'));
+    store().newRun(42);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(store().run?.seed).toBe(42);
+    expect(useSaveStatus.getState().issue).toBe('write');
+    expect(await retrySave()).toBe(true);
+    expect(useSaveStatus.getState().issue).toBeNull();
+    expect((await readStorage())?.state.run).toEqual(store().run);
+  });
+
+  it('never retries a write over a save that could not be read', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    jest.mocked(AsyncStorage.getItem).mockRejectedValueOnce(new Error('disk unavailable'));
+    await useGameStore.persist.rehydrate();
+    const writes = jest.mocked(AsyncStorage.setItem).mock.calls.length;
+    expect(useSaveStatus.getState().issue).toBe('read');
+    expect(await retrySave()).toBe(false);
+    expect(jest.mocked(AsyncStorage.setItem).mock.calls.length).toBe(writes);
+  });
+
+  it('does not hide a newer save failure when an older write finishes late', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    let finishOldWrite!: () => void;
+    jest.mocked(AsyncStorage.setItem)
+      .mockImplementationOnce(() => new Promise<void>((resolve) => { finishOldWrite = resolve; }))
+      .mockRejectedValueOnce(new Error('latest snapshot failed'));
+    store().newRun(42);
+    store().updateSettings({ haptics: false });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(useSaveStatus.getState().issue).toBe('write');
+    finishOldWrite();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(useSaveStatus.getState().issue).toBe('write');
+    expect(await retrySave()).toBe(true);
+  });
+
   it('is hydrated after loading (empty) storage', async () => {
     await waitForHydration();
     expect(store().hydrated).toBe(true);

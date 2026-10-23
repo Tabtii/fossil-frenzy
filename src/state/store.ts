@@ -39,6 +39,7 @@ import {
   updateSettings as updateMetaSettings,
 } from './meta';
 import type { GameStore } from './types';
+import { reportSaveIssue, useSaveStatus } from './saveStatus';
 
 // App state: the current run (driven by the pure engine in src/engine/run.ts)
 // plus the meta progression, persisted to AsyncStorage. Store actions never
@@ -302,6 +303,8 @@ export function migratePersisted(persisted: unknown, version: number): Persisted
 
 /** Set when the save could not be read; blocks writes so it is never overwritten. */
 let writesBlocked = false;
+let latestWrite = 0;
+let lastSuccessfulWrite = 0;
 
 /**
  * JSON storage that never destroys a save it could not read: unreadable JSON
@@ -315,6 +318,7 @@ const safeStorage: PersistStorage<PersistedGame> = {
       raw = await AsyncStorage.getItem(name);
     } catch (error) {
       writesBlocked = true;
+      reportSaveIssue('read');
       console.warn('[store] could not read saved state; saving is disabled for this session:', error);
       return null;
     }
@@ -327,13 +331,22 @@ const safeStorage: PersistStorage<PersistedGame> = {
         await AsyncStorage.setItem(`${name}/corrupt`, raw);
       } catch {
         writesBlocked = true;
+        reportSaveIssue('read');
       }
       return null;
     }
   },
   setItem: async (name, value) => {
     if (writesBlocked) return;
-    await AsyncStorage.setItem(name, JSON.stringify(value));
+    const write = ++latestWrite;
+    try {
+      await AsyncStorage.setItem(name, JSON.stringify(value));
+      lastSuccessfulWrite = Math.max(lastSuccessfulWrite, write);
+      if (write === latestWrite && useSaveStatus.getState().issue === 'write') reportSaveIssue(null);
+    } catch (error) {
+      if (write > lastSuccessfulWrite) reportSaveIssue('write');
+      console.warn('[store] could not save the current expedition:', error);
+    }
   },
   removeItem: async (name) => {
     if (writesBlocked) return;
@@ -344,6 +357,15 @@ const safeStorage: PersistStorage<PersistedGame> = {
 /** Test hook: re-enables writes after a simulated read failure. */
 export function resetStorageGuard(): void {
   writesBlocked = false;
+  reportSaveIssue(null);
+}
+
+/** Retry the current in-memory state, without loading an older save over it. */
+export async function retrySave(): Promise<boolean> {
+  if (writesBlocked || !useGameStore.getState().hydrated) return false;
+  const { run, meta } = useGameStore.getState();
+  await safeStorage.setItem(STORAGE_KEY, { state: { run, meta }, version: STORAGE_VERSION });
+  return useSaveStatus.getState().issue === null;
 }
 
 // ---------------------------------------------------------------------------

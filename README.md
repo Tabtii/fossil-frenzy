@@ -23,6 +23,8 @@ dein Fossilienbuch mit echten paläontologischen Fakten.
   Kartentypen und zusammengefassten Duplikaten
 - **Archivsuche** nach entdeckten Karten/Effekten bzw. Fossilien/Fundorten
 - **Expeditionshandbuch** erklärt Kampf, Deckbau und Fortschritt direkt im Lager
+- **Speicherhilfe** zeigt tatsächliche Schreib-/Lesefehler an; „Erneut speichern“
+  sichert den aktuellen Stand, ohne einen älteren Spielstand darüberzuladen
 
 ## Tech Stack
 
@@ -45,6 +47,9 @@ npm run typecheck       # tsc --noEmit
 npm run lint            # expo lint
 npm test                # jest
 ```
+
+GitHub Actions prüft Pull Requests automatisch mit Typecheck, Lint, Tests und
+Bundle-Export für Android, iOS und Web (`.github/workflows/quality.yml`).
 
 Builds für die Stores laufen über EAS (`npx eas-cli@latest build`).
 
