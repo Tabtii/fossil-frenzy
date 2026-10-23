@@ -56,7 +56,17 @@ npm test                # jest
 GitHub Actions prüft Pull Requests automatisch mit Typecheck, Lint, Tests und
 Bundle-Export für Android, iOS und Web (`.github/workflows/quality.yml`).
 
-Builds für die Stores laufen über EAS (`npx eas-cli@latest build`).
+`eas.json` enthält ein `preview`-Profil für eine direkt installierbare
+Android-APK und ein `production`-Profil für Store-Builds. Nach dem einmaligen
+Verknüpfen mit dem eigenen Expo-Projekt:
+
+```bash
+npx eas-cli@latest build --platform android --profile preview
+```
+
+Die APK startet mit ihrem gebündelten Spielinhalt und benötigt keinen Dev-Server.
+Ein echter Geräte-Build ist zusätzlich zu den JavaScript-Bundle-Prüfungen nötig.
+Testabläufe und die EAS-Einrichtung stehen in [`docs/TESTING.md`](docs/TESTING.md).
 
 ## Spielanleitung
 
