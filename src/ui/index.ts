@@ -28,6 +28,8 @@ export { ListRow, type ListRowProps } from './components/ListRow';
 export { Pill, type PillProps, type PillTone, Tag, type TagProps } from './components/Pill';
 export { ProgressDots, type ProgressDotsProps } from './components/ProgressDots';
 export { Screen, type ScreenProps } from './components/Screen';
+export { SearchField } from './components/SearchField';
+export { FossilArtwork, hasFossilArtwork } from './components/FossilArtwork';
 export { StatBar, type StatBarProps, type StatBarSize } from './components/StatBar';
 export {
   activeStatuses,

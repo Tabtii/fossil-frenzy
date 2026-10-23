@@ -25,6 +25,7 @@ export function DigScreen() {
       subtitle="Unter dem Sand schimmern drei Funde. Lege einen frei und nimm ihn als Karte mit."
       intro={<DigSite />}
       choices={run.screen.choices}
+      deck={run.deck}
       onChoose={chooseDig}
       titleColor={colors.warning}
       testID="dig-screen"

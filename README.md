@@ -15,6 +15,21 @@ dein Fossilienbuch mit echten paläontologischen Fakten.
 - **Mobile First**: Hochformat, Daumenzone, Safe Areas, 320–430 dp, Haptik,
   reduzierte Bewegung, Screenreader-Labels
 - Spielstand wird automatisch gespeichert (Expedition fortsetzen jederzeit möglich)
+- **Expeditionslager** im Wald-/Amber-Design mit lokal gebündelten Illustrationen;
+  die drei Starterkarten tragen eigene Motive, auch im Fossilienbuch
+- **Tagesexpedition** mit weltweitem UTC-Tagescode und **Expeditionscodes** zum
+  Wiederholen derselben Ausgangslage innerhalb derselben Spielversion
+- **Deckanalyse** mit Energiekurve, tatsächlichen Verbesserungskosten,
+  Kartentypen, Kartengruppen und zusammengefassten Duplikaten; direkt bei
+  Belohnungen und Ausgrabungen aufrufbar, ohne die Auswahl zu verlieren
+- **Archivsuche** nach entdeckten Karten/Effekten bzw. Fossilien/Fundorten
+- **Expeditionshandbuch** erklärt Kampf, Deckbau und Fortschritt direkt im Lager
+- **Kampfmenü** über „Akt … ⋮“: Regeln nachschlagen, weiterspielen oder den
+  laufenden Kampf im Lager pausieren. Am Run-Ende lässt sich derselbe Code direkt wiederholen
+- **Speicherhilfe** zeigt tatsächliche Schreib-/Lesefehler an; „Erneut speichern“
+  sichert den aktuellen Stand, ohne einen älteren Spielstand darüberzuladen
+- Beschädigte Spielstände werden vor dem Ersetzen lokal gesichert und erklärt;
+  bei einer unbrauchbaren Expedition bleiben gültige Funde und Statistiken erhalten
 
 ## Tech Stack
 
@@ -22,6 +37,8 @@ Expo SDK 57 · React Native 0.86 · Expo Router · TypeScript · zustand · Rean
 Gesture Handler · Jest
 
 Architektur und Spielregeln: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+
+Bildquellen und verwendete Generierungsprompts: [`docs/ARTWORK.md`](docs/ARTWORK.md).
 
 ## Entwicklung
 
@@ -36,7 +53,20 @@ npm run lint            # expo lint
 npm test                # jest
 ```
 
-Builds für die Stores laufen über EAS (`npx eas-cli@latest build`).
+GitHub Actions prüft Pull Requests automatisch mit Typecheck, Lint, Tests und
+Bundle-Export für Android, iOS und Web (`.github/workflows/quality.yml`).
+
+`eas.json` enthält ein `preview`-Profil für eine direkt installierbare
+Android-APK und ein `production`-Profil für Store-Builds. Nach dem einmaligen
+Verknüpfen mit dem eigenen Expo-Projekt:
+
+```bash
+npx eas-cli@latest build --platform android --profile preview
+```
+
+Die APK startet mit ihrem gebündelten Spielinhalt und benötigt keinen Dev-Server.
+Ein echter Geräte-Build ist zusätzlich zu den JavaScript-Bundle-Prüfungen nötig.
+Testabläufe und die EAS-Einrichtung stehen in [`docs/TESTING.md`](docs/TESTING.md).
 
 ## Spielanleitung
 
@@ -45,6 +75,12 @@ Builds für die Stores laufen über EAS (`npx eas-cli@latest build`).
 3. **Lange drücken** zeigt Details und den Fossil-Fakt zur Karte.
 4. Die Anzeige über dem Gegner verrät seinen nächsten Zug — Block lohnt sich bei ⚔️.
 5. Nach jedem Sieg eine neue Karte wählen, an Rastplätzen heilen oder Karten verbessern.
+6. Auf der Karte das Deck öffnen: Energiekurve prüfen und den Expeditionscode
+   auswählen/kopieren. Mit „Mit Code“ im Lager lässt sich die Ausgangslage erneut spielen.
+
+Die Tagesexpedition verwendet die bestehenden Spielregeln und wechselt um
+00:00 UTC. Eine laufende Expedition bleibt bis zu deiner ausdrücklichen Bestätigung
+erhalten, wenn du einen neuen oder anderen Code starten möchtest.
 
 ## Lizenz
 

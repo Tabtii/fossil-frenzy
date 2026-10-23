@@ -74,6 +74,34 @@ eigene Fixtures).
   `fossilId`. Neue Funde landen im Fossilienbuch (Meta, persistiert).
 - Niederlage → `defeat`, letzter Boss besiegt → `victory`.
 
+## Expeditionscodes und Archivwerkzeuge
+
+- `features/shell/expedition.ts` stellt den vollständigen uint32-Seed als `FF-XXXXXXXX`
+  dar. Ungültige Eingaben werden abgewiesen. Wiederholungen setzen dieselbe Inhaltsversion voraus.
+- Tagesexpeditionen leiten ihren Seed mit den bestehenden RNG-Helfern aus dem
+  **UTC-Kalendertag** ab. Sie verwenden die normalen Spielregeln und denselben
+  Speicherplatz. Eine laufende Expedition wird erst nach Bestätigung ersetzt.
+- `features/map/deckAnalysis.ts` zählt physische Karten einschließlich Duplikaten
+  und berücksichtigt die tatsächlichen Kosten verbesserter Karten.
+- Die Archivsuche durchsucht ausschließlich entdeckte Inhalte und kombiniert sich
+  mit den bestehenden Filtern. Namen und Regeln gesperrter Inhalte bleiben verborgen.
+- Neu gestartete Expeditionen halten ihre erstmaligen Fossil-Entdeckungen in
+  `run.newFossils` fest. Die Abschlussansicht behält dadurch auch wiederholte
+  Funde und Funde aus früheren Akten als neu bei. Speicherformat 2 migriert ältere
+  Spielstände ohne Fortschrittsverlust; alte Runs behalten die bisherige Anzeige,
+  da ihre vollständige Fundgeschichte nachträglich nicht rekonstruierbar ist.
+- Die Speicherprüfung erkennt ungültige Kartenverbindungen, Kampfwerte,
+  Statuseffekte, entfernte Gegnerzüge sowie doppelte oder widersprüchliche Karten-IDs.
+  Wird eine beschädigte Expedition verworfen, bleibt der gültige Meta-Fortschritt erhalten.
+- Tatsächliche Speicherfehler werden in einem separaten, nicht persistierten
+  Status-Store gemeldet, damit die Fehlermeldung keine weitere Speicherung auslöst.
+  Ein erneuter Speicherversuch schreibt den aktuellen Arbeitsspeicherstand; nach
+  einem Lesefehler bleibt das Überschreiben des bestehenden Spielstands gesperrt.
+  Verspätete Antworten älterer Schreibvorgänge verdecken keinen neueren Fehler.
+- Bilder liegen ausschließlich in der UI (`ui/components/FossilArtwork.tsx`). Engine
+  und Inhaltsregister bleiben unabhängig von React Native. Ohne Bild oder Entdeckung
+  werden die ursprünglichen Symbole verwendet.
+
 ## Balance-Ziele
 
 - Startdeck 10 Karten, Gegner Trias normal 18–30 LP, Bosse 90–220 LP steigend je Akt.

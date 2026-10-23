@@ -47,7 +47,7 @@ export const IntentBadge = memo(function IntentBadge({
       <View style={styles.segments}>
         {display.segments.map((segment) => (
           <View key={segment.kind} style={styles.segment}>
-            <Text style={styles.icon} maxFontSizeMultiplier={fontScale.badge}>
+            <Text style={[styles.icon, { color: segment.selfHit ? selfHitColor : intentColors[segment.kind] }]} maxFontSizeMultiplier={fontScale.badge}>
               {segment.icon}
             </Text>
             {segment.value ? (

@@ -53,5 +53,5 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.accentBorder,
   },
   layerOffset: { paddingHorizontal: spacing.xxl },
-  item: { fontSize: 18, lineHeight: 24, opacity: 0.85 },
+  item: { fontSize: 18, lineHeight: 24, opacity: 0.85, color: colors.textSecondary },
 });

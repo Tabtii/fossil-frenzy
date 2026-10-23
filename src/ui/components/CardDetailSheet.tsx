@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { CardDef, FossilEntry } from '@/engine/types';
 
 import { cardGlossary, formatLength, formatMya, getCardView } from '../format';
-import { DIET_LABELS, FOSSIL_KIND_LABELS, UI_STRINGS } from '../labels';
+import { CARD_TAG_LABELS, DIET_LABELS, FOSSIL_KIND_LABELS, UI_STRINGS } from '../labels';
 import { useLayout } from '../layout';
 import { colors, fontScale, radii, spacing } from '../theme';
 import { AppText } from './AppText';
@@ -151,6 +151,15 @@ export const CardDetailSheet = memo(function CardDetailSheet({
           <View style={styles.cardWrap}>
             <GameCard def={card} upgraded={shown.upgraded} size="full" width={cardWidth} previewDamage={previewDamage} />
           </View>
+          {card.tags.length > 0 ? (
+            <View style={styles.glossary}>
+              <AppText variant="overline" tone="secondary">KARTENGRUPPEN</AppText>
+              <View style={styles.pills}>
+                {card.tags.map((tag) => <Pill key={tag} label={CARD_TAG_LABELS[tag]} size="sm" />)}
+              </View>
+              <AppText variant="caption" tone="secondary">Diese Gruppen zählen für Effekte wie „je weitere …-Karte“.</AppText>
+            </View>
+          ) : null}
           {glossary.length > 0 ? (
             <View style={styles.glossary}>
               <AppText variant="overline" tone="secondary">
@@ -193,7 +202,7 @@ const styles = StyleSheet.create({
     borderLeftColor: colors.accent,
   },
   fossilHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  fossilEmoji: { fontSize: 36, lineHeight: 44 },
+  fossilEmoji: { fontSize: 36, lineHeight: 44, color: colors.text },
   fossilTitles: { flex: 1, minWidth: 0 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   facts: { gap: spacing.xs, marginTop: spacing.xs },

@@ -30,8 +30,9 @@ export interface RunShellActions {
   /**
    * From the summary: records the finished run and starts a new one. The run
    * layout then shows the new map (no detour via home).
+   * An optional seed repeats the selected expedition's starting conditions.
    */
-  startNewRun: () => void;
+  startNewRun: (seed?: number) => void;
 }
 
 const RunShellContext = createContext<RunShellActions | null>(null);
@@ -52,11 +53,11 @@ function useRunShellActions(exitingRef: RefObject<boolean> | null): RunShellActi
     router.dismissTo(ROUTES.home);
   }, [exitingRef, finishRun]);
 
-  const startNewRun = useCallback(() => {
+  const startNewRun = useCallback((seed?: number) => {
     // finishRun() briefly clears the run; suppress "no run → home" meanwhile.
     if (exitingRef) exitingRef.current = true;
     if (isFinished()) finishRun();
-    newRun();
+    newRun(seed);
     if (exitingRef) exitingRef.current = false;
   }, [exitingRef, finishRun, newRun]);
 

@@ -175,6 +175,8 @@ describe('design system components', () => {
     expect(shown).toContain('Tanystropheus longobardicus');
     expect(shown).toContain('Sein Hals war länger');
     expect(shown).toContain('Verwundbar');
+    expect(shown).toContain('KARTENGRUPPEN');
+    expect(shown).toContain('Meeresbewohner');
     expect(shown).toContain('vor 242–237 Mio. Jahren');
     const action = r.root.find((node) => node.props.accessibilityLabel === 'Karte nehmen' && typeof node.props.onPress === 'function');
     act(() => action.props.onPress());

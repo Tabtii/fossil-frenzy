@@ -17,6 +17,7 @@ import {
   rarityColors,
 } from '../theme';
 import { EraBadge } from './EraBadge';
+import { FossilArtwork } from './FossilArtwork';
 
 export type GameCardSize = 'hand' | 'full' | 'mini';
 
@@ -154,13 +155,14 @@ function buildMetrics(size: GameCardSize, width: number) {
         backgroundColor: colors.card,
       },
       art: {
+        overflow: 'hidden',
         height: Math.round(height * spec.artRatio),
         alignItems: 'center',
         justifyContent: 'center',
         borderTopLeftRadius: innerRadius,
         borderTopRightRadius: innerRadius,
       },
-      emoji: { fontSize: round1(spec.emoji * k), lineHeight: Math.round(spec.emoji * k * 1.2), textAlign: 'center' },
+      emoji: { fontSize: round1(spec.emoji * k), lineHeight: Math.round(spec.emoji * k * 1.2), textAlign: 'center', color: colors.text },
       gem: {
         position: 'absolute',
         top: pad,
@@ -352,9 +354,7 @@ export const GameCard = memo(function GameCard({
   const content = (
     <>
       <View style={[s.art, typeTint(def.type)]}>
-        <Text style={s.emoji} allowFontScaling={false} accessible={false}>
-          {def.emoji}
-        </Text>
+        <FossilArtwork fossilId={def.fossilId} emoji={def.emoji} emojiStyle={s.emoji} frame={{ width: cardWidth - 2 * spec.border, height: Math.round(metrics.height * spec.artRatio) }} />
         {preview.mode === 'badge' ? (
           <View style={[s.previewBadge, { borderColor: trendColor(preview) }]}>
             <Text

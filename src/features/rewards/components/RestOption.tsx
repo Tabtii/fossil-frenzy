@@ -79,6 +79,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.accentSoft,
   },
-  icon: { fontSize: 28, lineHeight: 34 },
+  icon: { fontSize: 28, lineHeight: 34, color: colors.text },
   text: { flex: 1, minWidth: 0, gap: spacing.xxs },
 });

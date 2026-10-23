@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <title>Fossil Frenzy — monochrome</title>
+  <defs>
+    <mask id="skull">
+      <rect width="128" height="128" fill="white"/>
+      <path d="M54 50C48 50 46 55 48 59C50 63 57 64 61 60C65 56 61 50 54 50ZM78 52L84 59L76 59ZM63 67L65 73L68 67M72 65L74 71L77 65M81 63L83 68L86 62" fill="black"/>
+    </mask>
+  </defs>
+  <g fill="none" stroke="white" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M30 38L19 42C14 44 12 48 14 53L33 113C34 118 40 121 45 119L69 111" stroke-width="3"/>
+    <path d="M42 22L90 14C96 13 100 17 101 22L112 87C113 92 109 97 104 98" stroke-width="3"/>
+    <rect x="30" y="22" width="68" height="86" rx="10" stroke-width="4"/>
+    <path d="M48 78L61 83L78 77L85 70" stroke-width="5"/>
+    <path d="M42 96H61M82 96H86" stroke-width="3"/>
+  </g>
+  <circle cx="41" cy="34" r="3" fill="white"/>
+  <path d="M43 76C35 68 38 58 44 51C50 44 60 42 71 43L81 46C86 48 89 54 89 60C89 65 85 68 78 68L72 73L60 74L55 84L45 86L41 82Z" fill="white" mask="url(#skull)"/>
+</svg>

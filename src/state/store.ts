@@ -39,6 +39,7 @@ import {
   updateSettings as updateMetaSettings,
 } from './meta';
 import type { GameStore } from './types';
+import { reportSaveIssue, reportSaveRecovery, type SaveRecovery, useSaveStatus } from './saveStatus';
 
 // App state: the current run (driven by the pure engine in src/engine/run.ts)
 // plus the meta progression, persisted to AsyncStorage. Store actions never
@@ -46,7 +47,7 @@ import type { GameStore } from './types';
 
 export const STORAGE_KEY = 'fossil-frenzy/v2';
 /** Bump when the persisted shape changes and extend `migratePersisted`. */
-export const STORAGE_VERSION = 1;
+export const STORAGE_VERSION = 2;
 
 export type PersistedGame = Pick<GameStore, 'run' | 'meta'>;
 
@@ -82,12 +83,21 @@ function isNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
+function isNatural(value: unknown): value is number {
+  return isNumber(value) && Number.isSafeInteger(value) && value >= 0;
+}
+
+function hasContent(registry: object, id: string): boolean {
+  return Object.prototype.hasOwnProperty.call(registry, id);
+}
+
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === 'string');
 }
 
 const NODE_TYPES = new Set(['fight', 'elite', 'rest', 'dig', 'boss']);
 const PHASES = new Set(['player', 'won', 'lost']);
+const STATUSES = new Set(['strength', 'vulnerable', 'weak', 'bleed', 'confused']);
 
 function isCardList(value: unknown, db: ContentDB): value is CardInstance[] {
   return (
@@ -95,72 +105,86 @@ function isCardList(value: unknown, db: ContentDB): value is CardInstance[] {
     value.every(
       (card) =>
         isRecord(card) &&
-        typeof card.uid === 'string' &&
+        typeof card.uid === 'string' && card.uid.length > 0 &&
         typeof card.defId === 'string' &&
         typeof card.upgraded === 'boolean' &&
-        db.cards[card.defId] !== undefined,
-    )
+        hasContent(db.cards, card.defId),
+    ) && new Set(value.map((card) => card.uid)).size === value.length
   );
 }
 
 function isCardChoices(value: unknown, db: ContentDB): value is string[] {
-  return isStringArray(value) && value.every((id) => db.cards[id] !== undefined);
+  return isStringArray(value) && value.every((id) => hasContent(db.cards, id));
 }
 
 function isMap(value: unknown, db: ContentDB): value is MapNode[] {
-  return (
+  const valid = (
     Array.isArray(value) &&
     value.length > 0 &&
     value.every(
       (node) =>
         isRecord(node) &&
-        typeof node.id === 'string' &&
-        isNumber(node.floor) &&
-        isNumber(node.lane) &&
+        typeof node.id === 'string' && node.id.length > 0 &&
+        isNatural(node.floor) &&
+        isNatural(node.lane) &&
         typeof node.type === 'string' &&
         NODE_TYPES.has(node.type) &&
         isStringArray(node.next) &&
         (node.enemyId === undefined ||
-          (typeof node.enemyId === 'string' && db.enemies[node.enemyId] !== undefined)),
+          (typeof node.enemyId === 'string' && hasContent(db.enemies, node.enemyId))),
     )
+  );
+  if (!valid) return false;
+  const nodes = value as MapNode[];
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  return byId.size === nodes.length && nodes.every((node) =>
+    node.next.every((id) => byId.get(id)?.floor === node.floor + 1) &&
+    (!['fight', 'elite', 'boss'].includes(node.type) || node.enemyId !== undefined),
   );
 }
 
 function isCombatant(value: unknown): boolean {
   return (
     isRecord(value) &&
-    isNumber(value.hp) &&
-    isNumber(value.maxHp) &&
-    isNumber(value.block) &&
-    isRecord(value.statuses)
+    isNatural(value.hp) &&
+    isNatural(value.maxHp) && value.maxHp > 0 && value.hp <= value.maxHp &&
+    isNatural(value.block) &&
+    isRecord(value.statuses) &&
+    Object.entries(value.statuses).every(([key, amount]) => STATUSES.has(key) && isNatural(amount))
   );
 }
 
 function isCombat(value: unknown, db: ContentDB): value is CombatState {
   if (!isRecord(value)) return false;
   const { enemy } = value;
-  return (
+  const valid = (
     isCombatant(value.player) &&
     isCombatant(enemy) &&
     isRecord(enemy) &&
     typeof enemy.defId === 'string' &&
-    db.enemies[enemy.defId] !== undefined &&
+    hasContent(db.enemies, enemy.defId) &&
     typeof enemy.nextMoveId === 'string' &&
     isStringArray(enemy.history) &&
     isCardList(value.drawPile, db) &&
     isCardList(value.hand, db) &&
     isCardList(value.discardPile, db) &&
     isCardList(value.exhaustPile, db) &&
-    isNumber(value.energy) &&
-    isNumber(value.maxEnergy) &&
-    isNumber(value.turn) &&
-    isNumber(value.cardsPlayedThisTurn) &&
-    isNumber(value.attacksPlayedThisTurn) &&
+    isNatural(value.energy) &&
+    isNatural(value.maxEnergy) && value.maxEnergy > 0 &&
+    isNatural(value.turn) && value.turn > 0 &&
+    isNatural(value.cardsPlayedThisTurn) &&
+    isNatural(value.attacksPlayedThisTurn) &&
     typeof value.phase === 'string' &&
     PHASES.has(value.phase) &&
-    isNumber(value.rngState) &&
+    isNatural(value.rngState) && value.rngState <= 0xffffffff &&
     Array.isArray(value.events)
   );
+  if (!valid) return false;
+  const combat = value as unknown as CombatState;
+  const def = db.enemies[combat.enemy.defId]!;
+  if (!def.moves.some((move) => move.id === combat.enemy.nextMoveId)) return false;
+  const cards = [...combat.hand, ...combat.drawPile, ...combat.discardPile, ...combat.exhaustPile];
+  return new Set(cards.map((card) => card.uid)).size === cards.length;
 }
 
 function isScreen(value: unknown, db: ContentDB, nodeIds: Set<string>): value is RunScreen {
@@ -171,7 +195,7 @@ function isScreen(value: unknown, db: ContentDB, nodeIds: Set<string>): value is
     case 'victory':
       return true;
     case 'actComplete':
-      return isNumber(value.act);
+      return isNatural(value.act) && value.act < ACT_COUNT;
     case 'rest':
     case 'defeat':
       return hasNode;
@@ -218,18 +242,30 @@ function sanitizeStats(raw: unknown): RunStats {
 export function sanitizeRun(raw: unknown, db: ContentDB = CONTENT): RunState | null {
   if (!isRecord(raw)) return null;
   const { seed, rngState, act, hp, maxHp, nextUid, map, currentNodeId, visited, deck, screen } = raw;
-  if (!isNumber(seed) || !isNumber(rngState) || !isNumber(nextUid)) return null;
-  if (!isNumber(act) || act < 0 || act >= ACT_COUNT) return null;
-  if (!isNumber(hp) || !isNumber(maxHp) || maxHp <= 0) return null;
+  if (!isNatural(seed) || seed > 0xffffffff || !isNatural(rngState) || rngState > 0xffffffff || !isNatural(nextUid)) return null;
+  if (!isNatural(act) || act >= ACT_COUNT) return null;
+  if (!isNatural(hp) || !isNatural(maxHp) || maxHp <= 0 || hp > maxHp) return null;
   if (!isMap(map, db) || !isStringArray(visited) || !isCardList(deck, db)) return null;
   const nodeIds = new Set(map.map((node) => node.id));
+  if (!visited.every((id) => nodeIds.has(id))) return null;
   if (currentNodeId !== null && !(typeof currentNodeId === 'string' && nodeIds.has(currentNodeId))) {
     return null;
   }
   if (!isScreen(screen, db, nodeIds)) return null;
+  if (screen.type === 'combat') {
+    const cards = [...screen.combat.hand, ...screen.combat.drawPile, ...screen.combat.discardPile, ...screen.combat.exhaustPile];
+    const owned = new Map(deck.map((card) => [card.uid, card]));
+    if (cards.length !== deck.length || cards.some((card) => {
+      const original = owned.get(card.uid);
+      return !original || original.defId !== card.defId || original.upgraded !== card.upgraded;
+    })) return null;
+  }
   // Events only describe the last action before saving; never replay them.
   const loadedScreen: RunScreen =
     screen.type === 'combat' ? { ...screen, combat: { ...screen.combat, events: [] } } : screen;
+  const newFossils = isStringArray(raw.newFossils)
+    ? [...new Set(raw.newFossils.filter((id) => hasContent(db.fossils, id)))]
+    : undefined;
   return {
     seed,
     rngState,
@@ -243,6 +279,7 @@ export function sanitizeRun(raw: unknown, db: ContentDB = CONTENT): RunState | n
     nextUid,
     screen: loadedScreen,
     stats: sanitizeStats(raw.stats),
+    ...(newFossils !== undefined ? { newFossils } : {}),
   };
 }
 
@@ -254,8 +291,9 @@ export function sanitizePersisted(raw: unknown, db: ContentDB = CONTENT): Persis
 
 /**
  * Migrates a persisted state written with an older (or unknown) version.
- * Version 1 is the first v2 save format, so every older shape is simply
- * sanitised (keeping whatever is still valid).
+ * Version 2 tracks first discoveries within newly started expeditions.
+ * Older expeditions retain the legacy summary fallback; their valid run and
+ * meta progress are sanitised and kept.
  */
 export function migratePersisted(persisted: unknown, version: number): PersistedGame {
   if (version !== STORAGE_VERSION) {
@@ -270,11 +308,24 @@ export function migratePersisted(persisted: unknown, version: number): Persisted
 
 /** Set when the save could not be read; blocks writes so it is never overwritten. */
 let writesBlocked = false;
+let latestWrite = 0;
+let lastSuccessfulWrite = 0;
+
+/** Keep the last rejected save locally before allowing any replacement writes. */
+async function backupRejectedSave(name: string, raw: string, recovery: NonNullable<SaveRecovery>): Promise<void> {
+  try {
+    await AsyncStorage.setItem(`${name}/corrupt`, raw);
+    reportSaveRecovery(recovery);
+  } catch {
+    writesBlocked = true;
+    reportSaveIssue('read');
+  }
+}
 
 /**
- * JSON storage that never destroys a save it could not read: unreadable JSON
- * is backed up before defaults are written, and a failed read blocks all
- * writes for this session (the next launch tries again).
+ * JSON storage that preserves unreadable files and rejected expeditions before
+ * defaults are written. A failed read or backup blocks replacement writes for
+ * this session (the next launch tries again).
  */
 const safeStorage: PersistStorage<PersistedGame> = {
   getItem: async (name) => {
@@ -283,25 +334,37 @@ const safeStorage: PersistStorage<PersistedGame> = {
       raw = await AsyncStorage.getItem(name);
     } catch (error) {
       writesBlocked = true;
+      reportSaveIssue('read');
       console.warn('[store] could not read saved state; saving is disabled for this session:', error);
       return null;
     }
     if (raw === null) return null;
+    let parsed: unknown;
     try {
-      return JSON.parse(raw) as StorageValue<PersistedGame>;
+      parsed = JSON.parse(raw);
+      if (!isRecord(parsed) || !isRecord(parsed.state)) throw new Error('saved state has no valid state object');
     } catch (error) {
       console.warn('[store] saved state is corrupt; keeping a backup:', error);
-      try {
-        await AsyncStorage.setItem(`${name}/corrupt`, raw);
-      } catch {
-        writesBlocked = true;
-      }
+      await backupRejectedSave(name, raw, 'file');
       return null;
     }
+    // A valid JSON file may still contain an expedition from removed content or
+    // damaged card/map data. Preserve the original and explain the discarded run.
+    const saved = parsed as StorageValue<PersistedGame>;
+    if (saved.state.run != null && sanitizeRun(saved.state.run) === null) await backupRejectedSave(name, raw, 'run');
+    return saved;
   },
   setItem: async (name, value) => {
     if (writesBlocked) return;
-    await AsyncStorage.setItem(name, JSON.stringify(value));
+    const write = ++latestWrite;
+    try {
+      await AsyncStorage.setItem(name, JSON.stringify(value));
+      lastSuccessfulWrite = Math.max(lastSuccessfulWrite, write);
+      if (write === latestWrite && useSaveStatus.getState().issue === 'write') reportSaveIssue(null);
+    } catch (error) {
+      if (write > lastSuccessfulWrite) reportSaveIssue('write');
+      console.warn('[store] could not save the current expedition:', error);
+    }
   },
   removeItem: async (name) => {
     if (writesBlocked) return;
@@ -312,6 +375,16 @@ const safeStorage: PersistStorage<PersistedGame> = {
 /** Test hook: re-enables writes after a simulated read failure. */
 export function resetStorageGuard(): void {
   writesBlocked = false;
+  reportSaveIssue(null);
+  reportSaveRecovery(null);
+}
+
+/** Retry the current in-memory state, without loading an older save over it. */
+export async function retrySave(): Promise<boolean> {
+  if (writesBlocked || !useGameStore.getState().hydrated) return false;
+  const { run, meta } = useGameStore.getState();
+  await safeStorage.setItem(STORAGE_KEY, { state: { run, meta }, version: STORAGE_VERSION });
+  return useSaveStatus.getState().issue === null;
 }
 
 // ---------------------------------------------------------------------------
@@ -347,7 +420,12 @@ export const useGameStore = create<GameStore>()(
           return;
         }
         if (next === run) return;
-        set({ run: next, meta: sync ? sync(meta, next) : meta });
+        const nextMeta = sync ? sync(meta, next) : meta;
+        if (nextMeta !== meta && next.newFossils !== undefined) {
+          const discovered = Object.keys(nextMeta.fossils).filter((id) => meta.fossils[id] === undefined);
+          if (discovered.length > 0) next = { ...next, newFossils: [...new Set([...next.newFossils, ...discovered])] };
+        }
+        set({ run: next, meta: nextMeta });
       };
 
       return {
@@ -371,7 +449,9 @@ export const useGameStore = create<GameStore>()(
             meta = recordRunFinished(meta, previous.screen.type === 'victory');
           }
           meta = recordRunStarted(meta);
-          meta = discoverFossils(meta, deckFossils(CONTENT, run), nowIso());
+          const fossils = deckFossils(CONTENT, run);
+          run = { ...run, newFossils: fossils.filter((id) => meta.fossils[id] === undefined) };
+          meta = discoverFossils(meta, fossils, nowIso());
           meta = markCardsSeen(meta, run.deck.map((card) => card.defId));
           set({ run, meta });
         },
