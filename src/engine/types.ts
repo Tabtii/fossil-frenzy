@@ -291,6 +291,8 @@ export interface RunState {
   nextUid: number;
   screen: RunScreen;
   stats: RunStats;
+  /** First-ever fossil discoveries made in this expedition; absent in legacy saves. */
+  newFossils?: string[];
 }
 
 export type RestChoice = { type: 'heal' } | { type: 'upgrade'; uid: string };

@@ -227,4 +227,12 @@ describe('summary', () => {
     const lostIds = lost.map((find) => find.entry.id);
     if (!starterFossils.includes(enemyFossil)) expect(lostIds).not.toContain(enemyFossil);
   });
+
+  it('keeps tracked discoveries from earlier acts even after repeat finds', () => {
+    const run = { ...createRun(CONTENT, 42), act: 3, newFossils: ['coelophysis'], deck: [], visited: [] };
+    const records = { coelophysis: record(2) };
+    expect(runFossilFinds(CONTENT, run, records)).toEqual([
+      { entry: CONTENT.fossils.coelophysis, isNew: true },
+    ]);
+  });
 });

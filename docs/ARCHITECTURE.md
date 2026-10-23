@@ -85,6 +85,11 @@ eigene Fixtures).
   und berücksichtigt die tatsächlichen Kosten verbesserter Karten.
 - Die Archivsuche durchsucht ausschließlich entdeckte Inhalte und kombiniert sich
   mit den bestehenden Filtern. Namen und Regeln gesperrter Inhalte bleiben verborgen.
+- Neu gestartete Expeditionen halten ihre erstmaligen Fossil-Entdeckungen in
+  `run.newFossils` fest. Die Abschlussansicht behält dadurch auch wiederholte
+  Funde und Funde aus früheren Akten als neu bei. Speicherformat 2 migriert ältere
+  Spielstände ohne Fortschrittsverlust; alte Runs behalten die bisherige Anzeige,
+  da ihre vollständige Fundgeschichte nachträglich nicht rekonstruierbar ist.
 - Die Speicherprüfung erkennt ungültige Kartenverbindungen, Kampfwerte,
   Statuseffekte, entfernte Gegnerzüge sowie doppelte oder widersprüchliche Karten-IDs.
   Wird eine beschädigte Expedition verworfen, bleibt der gültige Meta-Fortschritt erhalten.

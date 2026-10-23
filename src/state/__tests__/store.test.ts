@@ -5,6 +5,7 @@ import { CONTENT } from '@/data';
 import { canPlay } from '@/engine/combat';
 import { availableNodes, createRun, currentNode, deckFossils, enterNode as engineEnterNode } from '@/engine/run';
 import type { RunState } from '@/engine/types';
+import { runFossilFinds } from '@/features/shell/model';
 import { initialMeta } from '../meta';
 import { useSaveStatus } from '../saveStatus';
 import { selectCombat } from '../selectors';
@@ -228,6 +229,18 @@ describe('hydration', () => {
     expect(JSON.parse((await AsyncStorage.getItem(`${STORAGE_KEY}/corrupt`))!).state.run).toEqual(broken);
     expect(useSaveStatus.getState().recovery).toBe('run');
   });
+
+  it('upgrades a valid version-1 expedition without losing its run or progress', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const run = createRun(CONTENT, SEED);
+    const meta = { ...initialMeta(), runsStarted: 8, runsWon: 2 };
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ state: { run, meta }, version: 1 }));
+    await useGameStore.persist.rehydrate();
+    expect(store().run).toEqual(run);
+    expect(store().meta).toEqual(meta);
+    expect(useSaveStatus.getState().recovery).toBeNull();
+    expect((await readStorage())?.version).toBe(STORAGE_VERSION);
+  });
 });
 
 describe('sanitizing', () => {
@@ -305,7 +318,7 @@ describe('newRun', () => {
     const run = requireRun();
     const { meta } = store();
 
-    expect(run).toEqual(createRun(CONTENT, SEED));
+    expect(run).toEqual({ ...createRun(CONTENT, SEED), newFossils: deckFossils(CONTENT, run) });
     expect(meta.runsStarted).toBe(1);
     expect(meta.cardsSeen).toEqual([...new Set(CONTENT.starterDeck)]);
     for (const fossilId of deckFossils(CONTENT, run)) {
@@ -324,6 +337,7 @@ describe('newRun', () => {
     store().newRun(2);
     expect(requireRun().seed).toBe(2);
     expect(store().meta.runsStarted).toBe(2);
+    expect(requireRun().newFossils).toEqual([]);
   });
 
   it('persists only run and meta', async () => {
@@ -425,6 +439,23 @@ describe('map and combat actions', () => {
       return;
     }
     throw new Error('the bot never won an opening fight');
+  });
+});
+
+describe('first discoveries within an expedition', () => {
+  it('still marks a first discovery as new after finding the same fossil twice and reopening', async () => {
+    store().newRun(SEED);
+    const def = Object.values(CONTENT.cards).find((card) => card.rarity !== 'starter')!;
+    for (let i = 0; i < 2; i++) {
+      const run = requireRun();
+      const nodeId = run.map[0]!.id;
+      useGameStore.setState({ run: { ...run, screen: { type: 'dig', nodeId, choices: [def.id] } } });
+      store().chooseDig(def.id);
+    }
+    await useGameStore.persist.rehydrate();
+    expect(store().meta.fossils[def.fossilId]?.timesFound).toBe(2);
+    const find = runFossilFinds(CONTENT, requireRun(), store().meta.fossils).find((entry) => entry.entry.id === def.fossilId);
+    expect(find?.isNew).toBe(true);
   });
 });
 

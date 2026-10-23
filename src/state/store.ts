@@ -47,7 +47,7 @@ import { reportSaveIssue, reportSaveRecovery, type SaveRecovery, useSaveStatus }
 
 export const STORAGE_KEY = 'fossil-frenzy/v2';
 /** Bump when the persisted shape changes and extend `migratePersisted`. */
-export const STORAGE_VERSION = 1;
+export const STORAGE_VERSION = 2;
 
 export type PersistedGame = Pick<GameStore, 'run' | 'meta'>;
 
@@ -263,6 +263,9 @@ export function sanitizeRun(raw: unknown, db: ContentDB = CONTENT): RunState | n
   // Events only describe the last action before saving; never replay them.
   const loadedScreen: RunScreen =
     screen.type === 'combat' ? { ...screen, combat: { ...screen.combat, events: [] } } : screen;
+  const newFossils = isStringArray(raw.newFossils)
+    ? [...new Set(raw.newFossils.filter((id) => hasContent(db.fossils, id)))]
+    : undefined;
   return {
     seed,
     rngState,
@@ -276,6 +279,7 @@ export function sanitizeRun(raw: unknown, db: ContentDB = CONTENT): RunState | n
     nextUid,
     screen: loadedScreen,
     stats: sanitizeStats(raw.stats),
+    ...(newFossils !== undefined ? { newFossils } : {}),
   };
 }
 
@@ -287,8 +291,9 @@ export function sanitizePersisted(raw: unknown, db: ContentDB = CONTENT): Persis
 
 /**
  * Migrates a persisted state written with an older (or unknown) version.
- * Version 1 is the first v2 save format, so every older shape is simply
- * sanitised (keeping whatever is still valid).
+ * Version 2 tracks first discoveries within newly started expeditions.
+ * Older expeditions retain the legacy summary fallback; their valid run and
+ * meta progress are sanitised and kept.
  */
 export function migratePersisted(persisted: unknown, version: number): PersistedGame {
   if (version !== STORAGE_VERSION) {
@@ -415,7 +420,12 @@ export const useGameStore = create<GameStore>()(
           return;
         }
         if (next === run) return;
-        set({ run: next, meta: sync ? sync(meta, next) : meta });
+        const nextMeta = sync ? sync(meta, next) : meta;
+        if (nextMeta !== meta && next.newFossils !== undefined) {
+          const discovered = Object.keys(nextMeta.fossils).filter((id) => meta.fossils[id] === undefined);
+          if (discovered.length > 0) next = { ...next, newFossils: [...new Set([...next.newFossils, ...discovered])] };
+        }
+        set({ run: next, meta: nextMeta });
       };
 
       return {
@@ -439,7 +449,9 @@ export const useGameStore = create<GameStore>()(
             meta = recordRunFinished(meta, previous.screen.type === 'victory');
           }
           meta = recordRunStarted(meta);
-          meta = discoverFossils(meta, deckFossils(CONTENT, run), nowIso());
+          const fossils = deckFossils(CONTENT, run);
+          run = { ...run, newFossils: fossils.filter((id) => meta.fossils[id] === undefined) };
+          meta = discoverFossils(meta, fossils, nowIso());
           meta = markCardsSeen(meta, run.deck.map((card) => card.defId));
           set({ run, meta });
         },
