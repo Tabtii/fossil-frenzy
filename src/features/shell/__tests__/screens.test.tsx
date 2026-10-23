@@ -13,9 +13,11 @@ import { createRun } from '@/engine/run';
 import { dailyExpedition } from '../expedition';
 import type { RunState } from '@/engine/types';
 import { initialMeta } from '@/state/meta';
+import { reportSaveIssue, reportSaveRecovery } from '@/state/saveStatus';
 import { useGameStore, waitForHydration } from '@/state/store';
 
 import { RunShell } from '../RunShell';
+import { SaveStatusNotice } from '../SaveStatusNotice';
 
 // Smoke tests for the shell screens with a mocked expo-router.
 
@@ -61,6 +63,8 @@ afterAll(() => {
 beforeEach(() => {
   for (const fn of Object.values(mockRouter)) fn.mockClear();
   mockPathname.current = '/';
+  reportSaveIssue(null);
+  reportSaveRecovery(null);
   useGameStore.setState({ hydrated: true, run: null, meta: initialMeta() });
 });
 
@@ -119,6 +123,20 @@ function confirmButton(buttons: AlertButton[] | undefined): AlertButton {
   if (!button?.onPress) throw new Error('no confirm button');
   return button;
 }
+
+describe('save recovery notice', () => {
+  it('explains a rejected expedition and dismisses without changing progress', () => {
+    const run = createRun(CONTENT, 42);
+    useGameStore.setState({ run });
+    const before = useGameStore.getState();
+    reportSaveRecovery('run');
+    const r = render(<SaveStatusNotice />);
+    expect(textOf(r.root)).toContain('Gültige Funde und Statistiken bleiben erhalten.');
+    press(r.root, 'dismiss-save-recovery');
+    expect(r.root.findAll((node) => node.props.testID === 'save-recovery-notice')).toHaveLength(0);
+    expect(useGameStore.getState()).toBe(before);
+  });
+});
 
 describe('home screen', () => {
   it('starts the displayed daily code even when UTC midnight passes before the tap', () => {

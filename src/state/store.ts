@@ -39,7 +39,7 @@ import {
   updateSettings as updateMetaSettings,
 } from './meta';
 import type { GameStore } from './types';
-import { reportSaveIssue, useSaveStatus } from './saveStatus';
+import { reportSaveIssue, reportSaveRecovery, type SaveRecovery, useSaveStatus } from './saveStatus';
 
 // App state: the current run (driven by the pure engine in src/engine/run.ts)
 // plus the meta progression, persisted to AsyncStorage. Store actions never
@@ -306,10 +306,21 @@ let writesBlocked = false;
 let latestWrite = 0;
 let lastSuccessfulWrite = 0;
 
+/** Keep the last rejected save locally before allowing any replacement writes. */
+async function backupRejectedSave(name: string, raw: string, recovery: NonNullable<SaveRecovery>): Promise<void> {
+  try {
+    await AsyncStorage.setItem(`${name}/corrupt`, raw);
+    reportSaveRecovery(recovery);
+  } catch {
+    writesBlocked = true;
+    reportSaveIssue('read');
+  }
+}
+
 /**
- * JSON storage that never destroys a save it could not read: unreadable JSON
- * is backed up before defaults are written, and a failed read blocks all
- * writes for this session (the next launch tries again).
+ * JSON storage that preserves unreadable files and rejected expeditions before
+ * defaults are written. A failed read or backup blocks replacement writes for
+ * this session (the next launch tries again).
  */
 const safeStorage: PersistStorage<PersistedGame> = {
   getItem: async (name) => {
@@ -323,18 +334,20 @@ const safeStorage: PersistStorage<PersistedGame> = {
       return null;
     }
     if (raw === null) return null;
+    let parsed: unknown;
     try {
-      return JSON.parse(raw) as StorageValue<PersistedGame>;
+      parsed = JSON.parse(raw);
+      if (!isRecord(parsed) || !isRecord(parsed.state)) throw new Error('saved state has no valid state object');
     } catch (error) {
       console.warn('[store] saved state is corrupt; keeping a backup:', error);
-      try {
-        await AsyncStorage.setItem(`${name}/corrupt`, raw);
-      } catch {
-        writesBlocked = true;
-        reportSaveIssue('read');
-      }
+      await backupRejectedSave(name, raw, 'file');
       return null;
     }
+    // A valid JSON file may still contain an expedition from removed content or
+    // damaged card/map data. Preserve the original and explain the discarded run.
+    const saved = parsed as StorageValue<PersistedGame>;
+    if (saved.state.run != null && sanitizeRun(saved.state.run) === null) await backupRejectedSave(name, raw, 'run');
+    return saved;
   },
   setItem: async (name, value) => {
     if (writesBlocked) return;
@@ -358,6 +371,7 @@ const safeStorage: PersistStorage<PersistedGame> = {
 export function resetStorageGuard(): void {
   writesBlocked = false;
   reportSaveIssue(null);
+  reportSaveRecovery(null);
 }
 
 /** Retry the current in-memory state, without loading an older save over it. */

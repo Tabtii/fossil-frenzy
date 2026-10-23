@@ -28,6 +28,8 @@ dein Fossilienbuch mit echten paläontologischen Fakten.
   laufenden Kampf im Lager pausieren. Am Run-Ende lässt sich derselbe Code direkt wiederholen
 - **Speicherhilfe** zeigt tatsächliche Schreib-/Lesefehler an; „Erneut speichern“
   sichert den aktuellen Stand, ohne einen älteren Spielstand darüberzuladen
+- Beschädigte Spielstände werden vor dem Ersetzen lokal gesichert und erklärt;
+  bei einer unbrauchbaren Expedition bleiben gültige Funde und Statistiken erhalten
 
 ## Tech Stack
 

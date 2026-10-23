@@ -128,6 +128,7 @@ describe('hydration', () => {
     expect(store().hydrated).toBe(true);
     expect(store().run).toEqual(run);
     expect(store().meta).toEqual(meta);
+    expect(useSaveStatus.getState().recovery).toBeNull();
   });
 
   it('survives corrupt JSON and still flags hydrated', async () => {
@@ -140,6 +141,7 @@ describe('hydration', () => {
     expect(store().hydrated).toBe(true);
     expect(store().run).toBeNull();
     expect(store().meta).toEqual(initialMeta());
+    expect(useSaveStatus.getState().recovery).toBe('file');
   });
 
   it('survives a storage read error', async () => {
@@ -176,6 +178,30 @@ describe('hydration', () => {
     expect(await AsyncStorage.getItem(`${STORAGE_KEY}/corrupt`)).toBe('{kaputt');
   });
 
+  it('backs up valid JSON with a broken envelope and explains the recovery', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await AsyncStorage.setItem(STORAGE_KEY, '[1,2,3]');
+    await useGameStore.persist.rehydrate();
+    expect(await AsyncStorage.getItem(`${STORAGE_KEY}/corrupt`)).toBe('[1,2,3]');
+    expect(useSaveStatus.getState().recovery).toBe('file');
+    expect(useSaveStatus.getState().issue).toBeNull();
+  });
+
+  it('protects an incompatible run when its backup cannot be written', async () => {
+    const broken = { ...createRun(CONTENT, SEED), hp: -1 };
+    const meta = { ...initialMeta(), runsStarted: 7 };
+    const saved = JSON.stringify({ state: { run: broken, meta }, version: STORAGE_VERSION });
+    await AsyncStorage.setItem(STORAGE_KEY, saved);
+    jest.mocked(AsyncStorage.setItem).mockRejectedValueOnce(new Error('backup full'));
+    await useGameStore.persist.rehydrate();
+    expect(store().run).toBeNull();
+    expect(store().meta).toEqual(meta);
+    expect(useSaveStatus.getState().issue).toBe('read');
+    expect(useSaveStatus.getState().recovery).toBeNull();
+    store().newRun(SEED);
+    expect(await AsyncStorage.getItem(STORAGE_KEY)).toBe(saved);
+  });
+
   it('ignores actions before the save has loaded', () => {
     jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     useGameStore.setState({ hydrated: false });
@@ -199,6 +225,8 @@ describe('hydration', () => {
     expect(store().meta).toEqual(meta);
     // The migrated state is written back with the current version.
     expect((await readStorage())?.version).toBe(STORAGE_VERSION);
+    expect(JSON.parse((await AsyncStorage.getItem(`${STORAGE_KEY}/corrupt`))!).state.run).toEqual(broken);
+    expect(useSaveStatus.getState().recovery).toBe('run');
   });
 });
 
