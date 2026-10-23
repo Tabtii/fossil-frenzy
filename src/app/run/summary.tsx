@@ -66,6 +66,14 @@ export default function SummaryScreen() {
     });
   }, [guard, startNewRun]);
 
+  const onReplay = useCallback(() => {
+    if (!run) return;
+    guard(() => {
+      haptics.selection();
+      startNewRun(run.seed);
+    });
+  }, [guard, run, startNewRun]);
+
   const onCloseDetail = useCallback(() => setDetail(null), []);
 
   if (run === null) return <Screen />;
@@ -105,6 +113,7 @@ export default function SummaryScreen() {
       <View>
         <AppText variant="overline" tone="muted" align="center">DEIN EXPEDITIONSCODE</AppText>
         <AppText variant="number" tone="accent" align="center" selectable>{expeditionCode(run.seed)}</AppText>
+        <Button label="Diese Expedition wiederholen" variant="ghost" fullWidth onPress={onReplay} testID="summary-replay" />
       </View>
       {headline ? (
         <View style={styles.hero}>

@@ -25,7 +25,7 @@ export function ExpeditionSetupSheet({ mode, onClose, onStart, reducedMotion }: 
   const seed = parseExpeditionCode(input);
   const invalid = submitted && seed === null;
   const start = () => {
-    if (mode === 'daily') { Keyboard.dismiss(); onStart(dailyExpedition(new Date()).seed); }
+    if (mode === 'daily') { Keyboard.dismiss(); onStart(day.seed); }
     else if (seed !== null) { Keyboard.dismiss(); onStart(seed); }
     else setSubmitted(true);
   };

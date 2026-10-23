@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { eraForAct } from '@/engine/run';
 import type { NodeType } from '@/engine/types';
-import { AppText, colors, ERA_ICONS, ERA_LABELS, fontScale, radii, sizes, spacing } from '@/ui';
+import { AppText, colors, ERA_LABELS, fontScale, radii, sizes, spacing } from '@/ui';
 
 import { PILE_INFO, PILE_ORDER, type PileCounts, type PileId, pileAccessibilityLabel } from '../piles';
 import { actLabel, BATTLE_TEXT, floorLabel } from '../strings';
@@ -18,6 +18,8 @@ export interface BattleTopBarProps {
   /** Narrow phones: piles show icon and count only. */
   compact: boolean;
   onOpenPile: (pile: PileId) => void;
+  onPause: () => void;
+  pauseDisabled?: boolean;
 }
 
 interface PileButtonProps {
@@ -52,7 +54,7 @@ const PileButton = memo(function PileButton({ pile, count, compact, onPress }: P
 });
 
 /** Act/floor on the left, tappable pile counters (deck, draw, discard, exhausted) on the right. */
-export const BattleTopBar = memo(function BattleTopBar({ act, floor, nodeType, counts, compact, onOpenPile }: BattleTopBarProps) {
+export const BattleTopBar = memo(function BattleTopBar({ act, floor, nodeType, counts, compact, onOpenPile, onPause, pauseDisabled = false }: BattleTopBarProps) {
   const era = eraForAct(act);
   const place = nodeType === 'boss' ? BATTLE_TEXT.boss : floor !== null ? floorLabel(floor) : '';
   const elite = nodeType === 'elite' ? ` · ${BATTLE_TEXT.elite}` : '';
@@ -62,15 +64,15 @@ export const BattleTopBar = memo(function BattleTopBar({ act, floor, nodeType, c
 
   return (
     <View style={styles.root}>
-      <View style={styles.info} accessible accessibilityRole="header" accessibilityLabel={label}>
+      <Pressable style={({ pressed }) => [styles.info, pressed && styles.pilePressed]} onPress={onPause} disabled={pauseDisabled} accessibilityRole="button" accessibilityLabel={`Kampfmenü öffnen: ${label}`} accessibilityHint="Pause, Spielregeln oder Rückkehr zum Lager." accessibilityState={{ disabled: pauseDisabled }} testID="battle-menu">
         <AppText variant="label" numberOfLines={1} maxFontSizeMultiplier={fontScale.badge}>
-          {ERA_ICONS[era]} {actLabel(act)}
+          {actLabel(act)} ⋮
         </AppText>
         <AppText variant="caption" tone="secondary" numberOfLines={1} maxFontSizeMultiplier={fontScale.badge}>
           {place}
           {elite}
         </AppText>
-      </View>
+      </Pressable>
       <View style={styles.piles}>
         {PILE_ORDER.map((pile) =>
           pile === 'exhaust' && counts.exhaust === 0 ? null : (
@@ -90,7 +92,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     minHeight: sizes.touchTarget + spacing.sm,
   },
-  info: { flex: 1, minWidth: 0 },
+  info: { flex: 1, minWidth: 0, minHeight: sizes.touchTarget, justifyContent: 'center', paddingHorizontal: spacing.sm, borderRadius: radii.md, backgroundColor: colors.surfaceRaised },
   piles: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   pile: {
     minWidth: 48,

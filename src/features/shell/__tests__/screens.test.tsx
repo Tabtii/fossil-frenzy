@@ -121,6 +121,23 @@ function confirmButton(buttons: AlertButton[] | undefined): AlertButton {
 }
 
 describe('home screen', () => {
+  it('starts the displayed daily code even when UTC midnight passes before the tap', () => {
+    jest.useFakeTimers();
+    try {
+      jest.setSystemTime(new Date('2026-10-23T23:59:59Z'));
+      const expected = dailyExpedition(new Date()).seed;
+      const r = render(<HomeScreen />);
+      press(r.root, 'home-daily');
+      // Moving the clock does not run the modal's refresh interval.
+      jest.setSystemTime(new Date('2026-10-24T00:00:01Z'));
+      press(r.root, 'expedition-code-start');
+      expect(useGameStore.getState().run?.seed).toBe(expected);
+    } finally {
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    }
+  });
+
   it('starts a daily expedition from the existing rules and opens the field guide', () => {
     const r = render(<HomeScreen />);
     press(r.root, 'home-guide');
@@ -256,6 +273,20 @@ describe('run shell', () => {
 });
 
 describe('summary screen', () => {
+  it('replays the same seed from the beginning and counts the finished victory once', () => {
+    const previous = runAt({ type: 'victory' }, { act: 3, seed: 42 });
+    useGameStore.setState({ run: previous });
+    mockPathname.current = '/run/summary';
+    const r = render(<RunShell><SummaryScreen /></RunShell>);
+    press(r.root, 'summary-replay');
+    const next = useGameStore.getState().run;
+    expect(next?.seed).toBe(42);
+    expect(next?.act).toBe(0);
+    expect(next?.map).toEqual(createRun(CONTENT, 42).map);
+    expect(useGameStore.getState().meta.runsWon).toBe(1);
+    expect(mockRouter.replace).toHaveBeenCalledWith('/run/map');
+  });
+
   it('shows the result and leaves exactly once', () => {
     const run = runAt(
       { type: 'victory' },

@@ -11,10 +11,9 @@ const LESSONS = [
   ['06', 'Jeder Fund bleibt', 'Eine Niederlage beendet die Expedition. Dein Fossilienbuch und entdeckte Karten bleiben erhalten. Zurück zum Lager pausiert nur: Du kannst später weiterspielen.'],
 ] as const;
 
-export function FieldGuideSheet({ visible, onClose, reducedMotion }: { visible: boolean; onClose: () => void; reducedMotion: boolean }) {
+export function GuideLessons() {
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Dein Expeditionshandbuch" reducedMotion={reducedMotion} testID="field-guide">
-      <AppText tone="secondary">Alles, was du für deinen ersten Aufbruch wissen musst.</AppText>
+    <>
       {LESSONS.map(([number, title, body]) => (
         <View key={number} style={styles.lesson}>
           <AppText variant="overline" tone="accent" style={styles.number}>{number}</AppText>
@@ -24,6 +23,15 @@ export function FieldGuideSheet({ visible, onClose, reducedMotion }: { visible: 
           </View>
         </View>
       ))}
+    </>
+  );
+}
+
+export function FieldGuideSheet({ visible, onClose, reducedMotion }: { visible: boolean; onClose: () => void; reducedMotion: boolean }) {
+  return (
+    <BottomSheet visible={visible} onClose={onClose} title="Dein Expeditionshandbuch" reducedMotion={reducedMotion} testID="field-guide">
+      <AppText tone="secondary">Alles, was du für deinen ersten Aufbruch wissen musst.</AppText>
+      <GuideLessons />
     </BottomSheet>
   );
 }
