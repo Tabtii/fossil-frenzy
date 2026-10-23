@@ -2,10 +2,10 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { CONTENT } from '@/data';
-import type { CardInstance, FossilRecord } from '@/engine/types';
+import type { CardInstance, CardTag, FossilRecord } from '@/engine/types';
 import { summarizePile, type PileEntry } from '@/features/battle/piles';
 import { expeditionCode } from '@/features/shell/expedition';
-import { AppText, BottomSheet, CardDetailSheet, colors, GAME_CARD_WIDTH, GameCard, radii, spacing } from '@/ui';
+import { AppText, BottomSheet, CardDetailSheet, CARD_TAG_LABELS, colors, GAME_CARD_WIDTH, GameCard, Pill, radii, spacing } from '@/ui';
 
 import { analyzeDeck } from '../deckAnalysis';
 
@@ -16,6 +16,7 @@ export interface DeckSheetProps {
   onClose: () => void;
   reducedMotion: boolean;
   seed?: number;
+  testID?: string;
 }
 
 const DeckCard = memo(function DeckCard({
@@ -45,7 +46,7 @@ const DeckCard = memo(function DeckCard({
  * The run deck as mini cards. Tapping a card stacks the CardDetailSheet on
  * top (the deck sheet stays open underneath, so closing returns to the deck).
  */
-export const DeckSheet = memo(function DeckSheet({ visible, deck, fossils, onClose, reducedMotion, seed }: DeckSheetProps) {
+export const DeckSheet = memo(function DeckSheet({ visible, deck, fossils, onClose, reducedMotion, seed, testID = 'map-deck-sheet' }: DeckSheetProps) {
   const [detail, setDetail] = useState<PileEntry | null>(null);
   const closeDetail = useCallback(() => setDetail(null), []);
   const handleClose = useCallback(() => {
@@ -54,6 +55,7 @@ export const DeckSheet = memo(function DeckSheet({ visible, deck, fossils, onClo
   }, [onClose]);
   const analysis = useMemo(() => analyzeDeck(CONTENT, deck), [deck]);
   const groups = useMemo(() => summarizePile(deck, CONTENT), [deck]);
+  const tags = useMemo(() => (Object.entries(analysis.tags) as [CardTag, number][]).sort((a, b) => b[1] - a[1]), [analysis.tags]);
   const def = detail?.def ?? null;
 
   return (
@@ -63,7 +65,7 @@ export const DeckSheet = memo(function DeckSheet({ visible, deck, fossils, onClo
         onClose={handleClose}
         title={`Dein Deck (${deck.length} Karten)`}
         reducedMotion={reducedMotion}
-        testID="map-deck-sheet"
+        testID={testID}
       >
         {seed !== undefined ? (
           <View style={styles.code}>
@@ -95,6 +97,15 @@ export const DeckSheet = memo(function DeckSheet({ visible, deck, fossils, onClo
           </View>
           <AppText variant="caption" tone="secondary" align="center">⚔️ {analysis.types.attack} Angriff · 🛡️ {analysis.types.defense} Verteidigung · 🌿 {analysis.types.support} Unterstützung</AppText>
           {analysis.curve[4]! > 0 ? <AppText variant="caption" tone="muted">Karten für 4+ Energie brauchen zusätzliche Energieeffekte. Jeder Zug beginnt mit 3 Energie.</AppText> : null}
+          {tags.length > 0 ? (
+            <>
+              <AppText variant="overline" tone="muted">KARTENGRUPPEN</AppText>
+              <View style={styles.tags}>
+                {tags.map(([tag, count]) => <Pill key={tag} label={`${CARD_TAG_LABELS[tag]} · ${count}`} size="sm" />)}
+              </View>
+              <AppText variant="caption" tone="secondary">Eine Karte kann zu mehreren Gruppen gehören. Diese zählen für passende Karteneffekte.</AppText>
+            </>
+          ) : null}
         </View>
         <AppText variant="caption" tone="secondary">
           Gleiche Karten sind zusammengefasst. Tippe auf eine Karte für Details.
@@ -129,4 +140,5 @@ const styles = StyleSheet.create({
   barTrack: { height: 52, justifyContent: 'flex-end', width: '75%' },
   bar: { backgroundColor: colors.accent, borderRadius: radii.xs },
   code: { gap: spacing.xs },
+  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
 });

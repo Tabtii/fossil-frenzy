@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   },
   pressed: { backgroundColor: colors.accentPressed, transform: [{ scale: 0.98 }] },
   disabled: { opacity: opacity.disabled },
-  icon: { fontSize: 30, lineHeight: 36 },
+  icon: { fontSize: 30, lineHeight: 36, color: colors.onAccent },
   texts: { flex: 1, minWidth: 0, gap: spacing.xxs },
   title: { fontWeight: '800' },
   chevron: { color: colors.onAccent, fontSize: 28, lineHeight: 32, fontWeight: '700' },

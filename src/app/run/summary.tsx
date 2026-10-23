@@ -25,6 +25,7 @@ import {
   AppText,
   Button,
   CardDetailSheet,
+  colors,
   durations,
   EraBadge,
   Pill,
@@ -195,7 +196,7 @@ export default function SummaryScreen() {
 const styles = StyleSheet.create({
   body: { gap: spacing.md, paddingTop: spacing.xl },
   hero: { alignItems: 'center', gap: spacing.sm },
-  heroIcon: { fontSize: 64, lineHeight: 78, textAlign: 'center' },
+  heroIcon: { fontSize: 64, lineHeight: 78, textAlign: 'center', color: colors.accent },
   heroTexts: { alignItems: 'center', gap: spacing.sm },
   badge: { alignSelf: 'center' },
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },

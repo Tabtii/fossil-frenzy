@@ -41,6 +41,6 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     backgroundColor: colors.surfaceRaised,
   },
-  icon: { fontSize: 22, lineHeight: 28 },
+  icon: { fontSize: 22, lineHeight: 28, color: colors.accent },
   texts: { flex: 1, minWidth: 0 },
 });

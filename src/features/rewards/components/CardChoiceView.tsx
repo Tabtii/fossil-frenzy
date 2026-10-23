@@ -2,11 +2,12 @@ import { type ReactNode, useCallback, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { CONTENT } from '@/data';
-import type { CardDef } from '@/engine/types';
+import type { CardDef, CardInstance } from '@/engine/types';
+import { DeckSheet } from '@/features/map/components/DeckSheet';
 import { usePressGuard } from '@/features/shell/hooks';
 import * as haptics from '@/lib/haptics';
 import { useMeta, useSettings } from '@/state/selectors';
-import { AppText, Button, CardDetailSheet, getCardView, Screen, spacing, useLayout, useReduceMotion } from '@/ui';
+import { AppText, Button, CardDetailSheet, colors, getCardView, Screen, spacing, useLayout, useReduceMotion } from '@/ui';
 
 import { choiceDefs } from '../rewardModel';
 import { CardChoiceCarousel } from './CardChoiceCarousel';
@@ -19,6 +20,8 @@ export interface CardChoiceViewProps {
   /** Extra content between title and cards (fossil finds, banners …). */
   intro?: ReactNode;
   choices: readonly string[];
+  /** Current expedition deck, available while comparing the offered cards. */
+  deck: readonly CardInstance[];
   /** Called once with the chosen card id, or null to skip. */
   onChoose: (defId: string | null) => void;
   /** Screen background (theme token value). */
@@ -39,6 +42,7 @@ export function CardChoiceView({
   subtitle,
   intro,
   choices,
+  deck,
   onChoose,
   backgroundColor,
   titleColor,
@@ -53,6 +57,7 @@ export function CardChoiceView({
   const defs = useMemo(() => choiceDefs(CONTENT, choices), [choices]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<CardDef | null>(null);
+  const [deckOpen, setDeckOpen] = useState(false);
   const selected = defs.find((def) => def.id === selectedId) ?? null;
 
   const onSelect = useCallback((def: CardDef) => {
@@ -64,6 +69,11 @@ export function CardChoiceView({
     setDetail(def);
   }, []);
   const closeDetail = useCallback(() => setDetail(null), []);
+  const openDeck = useCallback(() => {
+    haptics.tapLight();
+    setDeckOpen(true);
+  }, []);
+  const closeDeck = useCallback(() => setDeckOpen(false), []);
 
   const choose = useCallback(
     (defId: string | null) => {
@@ -71,6 +81,7 @@ export function CardChoiceView({
         if (defId === null) haptics.tapLight();
         else haptics.cardPlayed();
         setDetail(null);
+        setDeckOpen(false);
         onChoose(defId);
       });
     },
@@ -134,6 +145,15 @@ export function CardChoiceView({
 
       {intro}
 
+      <Button
+        label={`Deck ansehen · ${deck.length} Karten`}
+        icon="🃏"
+        variant="secondary"
+        onPress={openDeck}
+        accessibilityHint="Zeigt deine Karten, Energiekurve und Kartengruppen, ohne die Auswahl zu ändern."
+        testID="choice-deck"
+      />
+
       {hasChoices ? (
         <View style={[styles.choices, { marginHorizontal: -gutter }]}>
           <CardChoiceCarousel
@@ -155,6 +175,14 @@ export function CardChoiceView({
         </AppText>
       )}
 
+      <DeckSheet
+        visible={deckOpen}
+        deck={deck}
+        fossils={fossils}
+        onClose={closeDeck}
+        reducedMotion={settings.reducedMotion}
+        testID="choice-deck-sheet"
+      />
       <CardDetailSheet
         def={detail}
         fossil={detail ? CONTENT.fossils[detail.fossilId] : undefined}
@@ -171,7 +199,7 @@ export function CardChoiceView({
 const styles = StyleSheet.create({
   body: { gap: spacing.lg, paddingTop: spacing.lg },
   hero: { alignItems: 'center', gap: spacing.xs },
-  icon: { fontSize: 44, lineHeight: 54, textAlign: 'center' },
+  icon: { fontSize: 44, lineHeight: 54, textAlign: 'center', color: colors.accent },
   // The carousel spans the full content column (it bleeds into the gutter).
   choices: { alignItems: 'center', gap: spacing.xs },
 });

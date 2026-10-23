@@ -64,7 +64,7 @@ export const StatusChips = memo(function StatusChips({
         const label = `${info.name} ${value}: ${info.description}`;
         const content = (
           <>
-            <Text style={size === 'md' ? styles.emojiMd : styles.emojiSm} maxFontSizeMultiplier={fontScale.badge}>
+            <Text style={[size === 'md' ? styles.emojiMd : styles.emojiSm, { color }]} maxFontSizeMultiplier={fontScale.badge}>
               {info.emoji}
             </Text>
             <Text

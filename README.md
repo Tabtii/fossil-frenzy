@@ -20,7 +20,8 @@ dein Fossilienbuch mit echten paläontologischen Fakten.
 - **Tagesexpedition** mit weltweitem UTC-Tagescode und **Expeditionscodes** zum
   Wiederholen derselben Ausgangslage innerhalb derselben Spielversion
 - **Deckanalyse** mit Energiekurve, tatsächlichen Verbesserungskosten,
-  Kartentypen und zusammengefassten Duplikaten
+  Kartentypen, Kartengruppen und zusammengefassten Duplikaten; direkt bei
+  Belohnungen und Ausgrabungen aufrufbar, ohne die Auswahl zu verlieren
 - **Archivsuche** nach entdeckten Karten/Effekten bzw. Fossilien/Fundorten
 - **Expeditionshandbuch** erklärt Kampf, Deckbau und Fortschritt direkt im Lager
 - **Kampfmenü** über „Akt … ⋮“: Regeln nachschlagen, weiterspielen oder den

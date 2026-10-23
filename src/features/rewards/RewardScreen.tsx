@@ -67,6 +67,7 @@ export function RewardScreen() {
       subtitle={subtitle}
       intro={intro}
       choices={screen.reward.choices}
+      deck={run.deck}
       onChoose={chooseCardReward}
       titleColor={colors.accent}
       testID="reward-screen"

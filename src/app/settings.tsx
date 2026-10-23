@@ -34,7 +34,7 @@ const ABOUT_POINTS: readonly { icon: string; text: string }[] = [
   },
   {
     icon: '🎨',
-    text: 'Die Grafik besteht aus Emoji-Kunst – Saurier, Pflanzen und Fossilien in den Farben ihrer Erdzeitalter.',
+    text: 'Illustrationen und Emoji-Kunst begleiten die Expedition. Alle Bilder sind im Spiel enthalten und brauchen keine Internetverbindung.',
   },
   {
     icon: '🔒',

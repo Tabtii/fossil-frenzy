@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 
-import { spacing } from '../theme';
+import { colors, spacing } from '../theme';
 import { AppText } from './AppText';
 import { Button } from './Button';
 
@@ -41,6 +41,6 @@ export const EmptyState = memo(function EmptyState({ icon, title, message, actio
 
 const styles = StyleSheet.create({
   root: { alignItems: 'center', justifyContent: 'center', padding: spacing.xxl, gap: spacing.sm },
-  icon: { fontSize: 48, lineHeight: 58, marginBottom: spacing.xs },
+  icon: { fontSize: 48, lineHeight: 58, marginBottom: spacing.xs, color: colors.textSecondary },
   action: { alignSelf: 'center', marginTop: spacing.md },
 });

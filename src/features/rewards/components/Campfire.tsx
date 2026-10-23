@@ -72,9 +72,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accentSoft,
     ...glow(colors.warning, 40),
   },
-  flame: { fontSize: 76, lineHeight: 92, textAlign: 'center' },
-  logs: { fontSize: 28, lineHeight: 32, marginTop: -spacing.md },
-  star: { position: 'absolute', top: spacing.sm, fontSize: 20, lineHeight: 26 },
+  flame: { fontSize: 76, lineHeight: 92, textAlign: 'center', color: colors.warning },
+  logs: { fontSize: 28, lineHeight: 32, marginTop: -spacing.md, color: colors.textSecondary },
+  star: { position: 'absolute', top: spacing.sm, fontSize: 20, lineHeight: 26, color: colors.accent },
   starLeft: { left: '18%' },
   starRight: { right: '18%' },
 });
