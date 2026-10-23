@@ -140,7 +140,7 @@ export const EnemyInfoSheet = memo(function EnemyInfoSheet({
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  emoji: { fontSize: 56, lineHeight: 66 },
+  emoji: { fontSize: 56, lineHeight: 66, color: colors.text },
   headerBody: { flex: 1, minWidth: 0, gap: spacing.sm },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   section: {

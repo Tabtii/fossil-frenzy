@@ -12,7 +12,7 @@ import {
   type Rarity,
 } from '@/engine/types';
 import { formatMya, formatNumberDe } from '@/ui/format';
-import { ERA_LABELS, RARITY_LABELS } from '@/ui/labels';
+import { CARD_TAG_LABELS, CARD_TYPE_LABELS, ERA_LABELS, RARITY_LABELS } from '@/ui/labels';
 import { matchesSearch } from './search';
 
 // Pure view models for the fossil book and the card collection. No React, no
@@ -353,7 +353,10 @@ export function collectionRows(
   const defs = sortCards(
     Object.values(db.cards).filter(
       (def) => matchesEra(def.era, filter.era) && (filter.type === 'all' || def.type === filter.type) &&
-        (!filter.query?.trim() || (seen.has(def.id) && matchesSearch(filter.query, def.name, describeCard(def, false)))),
+        (!filter.query?.trim() || (seen.has(def.id) && matchesSearch(
+          filter.query, def.name, describeCard(def, false), describeCard(def, true),
+          CARD_TYPE_LABELS[def.type], ERA_LABELS[def.era], ...def.tags.map((tag) => CARD_TAG_LABELS[tag]),
+        ))),
     ),
   );
   const rows: CollectionRow[] = [];

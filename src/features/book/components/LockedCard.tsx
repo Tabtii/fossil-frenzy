@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   art: { alignSelf: 'stretch', flex: 1, alignItems: 'center', justifyContent: 'center' },
-  icon: { opacity: 0.5, textAlign: 'center' },
+  icon: { opacity: 0.5, textAlign: 'center', color: colors.textMuted },
   era: { fontWeight: '700', textAlign: 'center' },
   rarity: { fontWeight: '700', textAlign: 'center', marginBottom: spacing.xxs },
 });

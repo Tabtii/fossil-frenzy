@@ -34,4 +34,20 @@ describe('archive search', () => {
     expect(rows.flatMap((row) => row.kind === 'row' ? row.items.map((item) => item.id) : [])).toEqual([def.id]);
     expect(collectionRows(CONTENT, [def.id], { era: 'eiszeit', type: 'all', query }, 2)).toHaveLength(0);
   });
+
+  it('finds existing card groups without revealing undiscovered group members', () => {
+    const query = 'Meeresbewohner Fleischfresser';
+    const rows = collectionRows(CONTENT, ['tanystropheus'], { era: 'all', type: 'all', query }, 2);
+    expect(rows.flatMap((row) => row.kind === 'row' ? row.items.map((item) => item.id) : [])).toEqual(['tanystropheus']);
+    expect(collectionRows(CONTENT, [], { era: 'all', type: 'all', query }, 2)).toHaveLength(0);
+    expect(collectionRows(CONTENT, ['tanystropheus'], { era: 'all', type: 'defense', query }, 2)).toHaveLength(0);
+  });
+
+  it('also searches the upgraded effects of a discovered card', () => {
+    const def = CONTENT.cards.tanystropheus!;
+    const query = describeCard(def, true);
+    const rows = collectionRows(CONTENT, [def.id], { era: 'all', type: 'all', query }, 2);
+    expect(rows.flatMap((row) => row.kind === 'row' ? row.items.map((item) => item.id) : [])).toEqual([def.id]);
+    expect(collectionRows(CONTENT, [], { era: 'all', type: 'all', query }, 2)).toHaveLength(0);
+  });
 });

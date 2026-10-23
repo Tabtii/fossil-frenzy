@@ -155,6 +155,7 @@ export default function HomeScreen() {
           title="Fossilienbuch"
           caption={progressText(fossils, 'entdeckt')}
           onPress={onFossils}
+          vertical={!stackTiles}
           style={stackTiles ? styles.tileStacked : undefined}
           testID="home-fossils"
         />
@@ -163,6 +164,7 @@ export default function HomeScreen() {
           title="Sammlung"
           caption={progressText(cards, 'Karten')}
           onPress={onCollection}
+          vertical={!stackTiles}
           style={stackTiles ? styles.tileStacked : undefined}
           testID="home-collection"
         />

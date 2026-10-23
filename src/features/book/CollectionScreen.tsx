@@ -170,7 +170,7 @@ export function CollectionScreen() {
     <Screen header={header} padded={false} contentStyle={styles.body} testID="collection">
       <View style={[styles.top, { paddingHorizontal: gutter }]}>
         <ProgressBar icon="🃏" progress={total} label={cardCounterText(total)} testID="collection-progress" />
-        <SearchField value={query} onChangeText={setQuery} placeholder="Entdeckte Karten oder Effekte suchen" testID="collection-search" />
+        <SearchField value={query} onChangeText={setQuery} placeholder="Name, Effekt oder Kartengruppe suchen" testID="collection-search" />
         <FilterChips
           options={ERA_OPTIONS}
           value={eraFilter}
@@ -195,7 +195,7 @@ export function CollectionScreen() {
           <EmptyState
             icon="🃏"
             title={query.trim() ? 'Keine Treffer' : 'Keine Karten'}
-            message={query.trim() ? 'Suche nach dem Namen oder einem Effekt einer bereits entdeckten Karte.' : 'Für diese Auswahl gibt es keine Karten.'}
+            message={query.trim() ? 'Suche nach Namen, Effekt oder Kartengruppe einer bereits entdeckten Karte. Auch Verbesserungen werden durchsucht.' : 'Für diese Auswahl gibt es keine Karten.'}
             actionLabel="Filter zurücksetzen"
             onAction={resetFilters}
           />

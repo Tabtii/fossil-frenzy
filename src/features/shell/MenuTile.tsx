@@ -11,6 +11,8 @@ export interface MenuTileProps {
   caption?: string;
   onPress: () => void;
   disabled?: boolean;
+  /** Put the icon above the title in narrow two-column layouts. */
+  vertical?: boolean;
   accessibilityHint?: string;
   style?: StyleProp<ViewStyle>;
   testID?: string;
@@ -22,6 +24,7 @@ export const MenuTile = memo(function MenuTile({
   caption,
   onPress,
   disabled = false,
+  vertical = false,
   accessibilityHint,
   style,
   testID,
@@ -35,17 +38,17 @@ export const MenuTile = memo(function MenuTile({
       disabled={disabled}
       onPress={onPress}
       testID={testID}
-      style={({ pressed }) => [styles.tile, pressed && styles.pressed, disabled && styles.disabled, style]}
+      style={({ pressed }) => [styles.tile, vertical && styles.vertical, pressed && styles.pressed, disabled && styles.disabled, style]}
     >
       <Text style={styles.icon} allowFontScaling={false}>
         {icon}
       </Text>
-      <View style={styles.texts}>
-        <AppText variant="bodyStrong" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+      <View style={[styles.texts, vertical ? styles.verticalTexts : styles.rowTexts]}>
+        <AppText variant="bodyStrong" numberOfLines={2}>
           {title}
         </AppText>
         {caption ? (
-          <AppText variant="caption" tone="secondary" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+          <AppText variant="caption" tone="secondary" numberOfLines={2}>
             {caption}
           </AppText>
         ) : null}
@@ -70,7 +73,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceRaised,
   },
   pressed: { backgroundColor: colors.surfacePressed, transform: [{ scale: 0.98 }] },
+  vertical: { flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', minHeight: 112, paddingVertical: spacing.md },
+  verticalTexts: { alignSelf: 'stretch' },
   disabled: { opacity: opacity.disabled },
   icon: { fontSize: 26, lineHeight: 32, color: colors.text },
-  texts: { flex: 1, minWidth: 0, gap: spacing.xxs },
+  texts: { minWidth: 0, gap: spacing.xxs },
+  rowTexts: { flex: 1 },
 });

@@ -148,6 +148,22 @@ describe('reward screen', () => {
     expect(currentRun().deck).toHaveLength(base.deck.length);
   });
 
+  it('opens the selected card with the visible details button and takes it from the sheet', async () => {
+    setRun(rewardScreen, { map, currentNodeId: firstNode.id });
+    const r = render(<RewardRoute />);
+    expect(byTestId(r.root, 'choice-details').props.disabled).toBe(true);
+    const pick = choices[0]!;
+    await press(r.root, `choice-card-${pick}`);
+    await press(r.root, 'choice-details');
+    const detail = r.root.find((node) => node.props.testID === 'choice-detail' && node.props.primaryAction);
+    expect(detail.props.def.id).toBe(pick);
+    expect(detail.props.visible).toBe(true);
+    await act(async () => { detail.props.primaryAction.onPress(); });
+    expect(currentRun().screen.type).toBe('map');
+    expect(currentRun().deck).toHaveLength(base.deck.length + 1);
+    expect(currentRun().deck.at(-1)?.defId).toBe(pick);
+  });
+
   it('keeps the selected reward and run intact while inspecting the current deck', async () => {
     setRun(rewardScreen, { map, currentNodeId: firstNode.id });
     const before = currentRun();

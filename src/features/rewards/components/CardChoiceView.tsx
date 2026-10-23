@@ -94,6 +94,9 @@ export function CardChoiceView({
   const takeDetail = useCallback(() => {
     if (detail) choose(detail.id);
   }, [choose, detail]);
+  const inspectSelected = useCallback(() => {
+    if (selected) onDetails(selected);
+  }, [selected, onDetails]);
 
   const selectedName = selected ? getCardView(selected, false).name : null;
   const hasChoices = defs.length > 0;
@@ -119,15 +122,16 @@ export function CardChoiceView({
               testID="choice-take"
             />
           ) : null}
-          <Button
-            label={hasChoices ? 'Überspringen' : 'Weiter'}
-            variant={hasChoices ? 'ghost' : 'primary'}
-            size={hasChoices ? 'md' : 'lg'}
-            fullWidth
-            onPress={skip}
-            accessibilityHint={hasChoices ? 'Du nimmst keine Karte mit.' : undefined}
-            testID="choice-skip"
-          />
+          {hasChoices ? (
+            <View style={styles.footerRow}>
+              <Button label="Details" variant="secondary" disabled={selected === null} onPress={inspectSelected}
+                accessibilityLabel={selectedName ? `Details zu ${selectedName}` : 'Kartendetails'}
+                accessibilityHint="Zeigt Kartentext, Kartengruppen und das zugehörige Fossil."
+                style={styles.footerAction} testID="choice-details" />
+              <Button label="Überspringen" variant="ghost" onPress={skip} accessibilityHint="Du nimmst keine Karte mit."
+                style={styles.footerAction} testID="choice-skip" />
+            </View>
+          ) : <Button label="Weiter" size="lg" fullWidth onPress={skip} testID="choice-skip" />}
         </>
       }
     >
@@ -191,6 +195,7 @@ export function CardChoiceView({
         onClose={closeDetail}
         primaryAction={detail ? { label: 'Karte nehmen', onPress: takeDetail } : undefined}
         reducedMotion={settings.reducedMotion}
+        testID="choice-detail"
       />
     </Screen>
   );
@@ -202,4 +207,6 @@ const styles = StyleSheet.create({
   icon: { fontSize: 44, lineHeight: 54, textAlign: 'center', color: colors.accent },
   // The carousel spans the full content column (it bleeds into the gutter).
   choices: { alignItems: 'center', gap: spacing.xs },
+  footerRow: { flexDirection: 'row', gap: spacing.sm },
+  footerAction: { flex: 1 },
 });
