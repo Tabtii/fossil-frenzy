@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <title>Fossil Frenzy</title>
+  <g stroke-linejoin="round">
+    <rect x="30" y="29" width="65" height="82" rx="10" transform="rotate(-17 64 66)" fill="#142426" stroke="#A0B8AF" stroke-width="3"/>
+    <rect x="34" y="23" width="65" height="82" rx="10" transform="rotate(9 64 66)" fill="#1B2F31" stroke="#F2B544" stroke-width="3"/>
+    <rect x="30" y="22" width="68" height="86" rx="10" fill="#F2B544" stroke="#FFE08A" stroke-width="2"/>
+    <circle cx="41" cy="34" r="3" fill="#142426"/>
+    <path d="M43 76C35 68 38 58 44 51C50 44 60 42 71 43L81 46C86 48 89 54 89 60C89 65 85 68 78 68L72 73L60 74L55 84L45 86L41 82Z" fill="#142426"/>
+    <path d="M48 78L61 83L78 77L85 70" fill="none" stroke="#142426" stroke-width="5" stroke-linecap="round"/>
+    <path d="M54 50C48 50 46 55 48 59C50 63 57 64 61 60C65 56 61 50 54 50Z" fill="#F2B544"/>
+    <path d="M78 52L84 59L76 59Z" fill="#F2B544"/>
+    <path d="M63 67L65 73L68 67M72 65L74 71L77 65M81 63L83 68L86 62" fill="#F2B544"/>
+    <path d="M42 96H61M82 96H86" fill="none" stroke="#142426" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>

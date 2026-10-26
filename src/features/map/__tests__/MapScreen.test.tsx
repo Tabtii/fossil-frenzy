@@ -9,6 +9,7 @@ import { availableNodes, createRun } from '@/engine/run';
 import type { RunState } from '@/engine/types';
 import { initialMeta } from '@/state/meta';
 import { useGameStore, waitForHydration } from '@/state/store';
+import { BottomSheet } from '@/ui';
 
 // Render smoke tests for the map screen with a mocked expo-router.
 
@@ -118,5 +119,26 @@ describe('map screen', () => {
     await press(r.root, 'map-home');
     expect(mockRouter.dismissTo).toHaveBeenCalledWith('/');
     expect(useGameStore.getState().run).not.toBeNull();
+  });
+
+  it('searches the owned deck without changing the run and clears the query on close', async () => {
+    const before = run();
+    const r = render(<MapRoute />);
+    await press(r.root, 'map-deck');
+    const input = () => r.root.find((node) => node.props.testID === 'deck-search' && node.props.onChangeText);
+    await act(async () => { input().props.onChangeText('Eoraptor'); });
+    expect(r.root.findAll((node) => node.props.testID === 'deck-card-eoraptor').length).toBeGreaterThan(0);
+    expect(r.root.findAll((node) => node.props.testID === 'deck-card-proganochelys')).toHaveLength(0);
+    expect(run()).toBe(before);
+    await act(async () => { input().props.onChangeText('keine solche Karte'); });
+    expect(r.root.findAll((node) => node.props.testID === 'deck-card-eoraptor')).toHaveLength(0);
+    await press(r.root, 'deck-search-clear');
+    expect(r.root.findAll((node) => node.props.testID === 'deck-card-proganochelys').length).toBeGreaterThan(0);
+    await act(async () => { input().props.onChangeText('verbessert'); });
+    const sheet = r.root.findAllByType(BottomSheet).find((node) => node.props.testID === 'map-deck-sheet');
+    await act(async () => { sheet?.props.onClose(); });
+    await press(r.root, 'map-deck');
+    expect(input().props.value).toBe('');
+    expect(run()).toBe(before);
   });
 });

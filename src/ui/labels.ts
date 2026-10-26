@@ -1,5 +1,5 @@
-import { KEYWORD_INFO } from '@/engine/describe';
-import type { CardType, Era, FossilEntry, FossilKind, IntentKind, Rarity } from '@/engine/types';
+import { KEYWORD_INFO, TAG_NAMES } from '@/engine/describe';
+import type { CardTag, CardType, Era, FossilEntry, FossilKind, IntentKind, Rarity } from '@/engine/types';
 
 // German display labels for engine enums. Kept in the UI layer so screens do
 // not need to import content modules for simple names.
@@ -28,6 +28,13 @@ export const CARD_TYPE_ICONS: Record<CardType, string> = {
   attack: '⚔️',
   defense: '🛡️',
   support: '✨',
+};
+
+/** Standalone labels for the same groups named by scaling effects. */
+export const CARD_TAG_LABELS: Record<CardTag, string> = {
+  ...TAG_NAMES,
+  plant: 'Pflanze',
+  invertebrate: 'Wirbellos',
 };
 
 export const RARITY_LABELS: Record<Rarity, string> = {

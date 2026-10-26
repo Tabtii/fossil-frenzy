@@ -163,6 +163,7 @@ export function MapScreen() {
       />
       <DeckSheet
         visible={deckOpen}
+        seed={run.seed}
         deck={run.deck}
         fossils={fossils}
         onClose={closeDeck}

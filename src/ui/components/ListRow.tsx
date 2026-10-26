@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   pressed: { backgroundColor: colors.surfacePressed },
   disabled: { opacity: opacity.disabled },
   left: { width: 36, alignItems: 'center', justifyContent: 'center' },
-  leftEmoji: { fontSize: 26, lineHeight: 32 },
+  leftEmoji: { fontSize: 26, lineHeight: 32, color: colors.text },
   texts: { flex: 1, minWidth: 0, gap: spacing.xxs },
   chevron: { color: colors.textMuted, fontSize: 24, lineHeight: 28, fontWeight: '600' },
 });

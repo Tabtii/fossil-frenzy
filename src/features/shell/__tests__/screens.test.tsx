@@ -10,11 +10,14 @@ import HomeScreen from '@/app/index';
 import SettingsScreen from '@/app/settings';
 import { CONTENT } from '@/data';
 import { createRun } from '@/engine/run';
+import { dailyExpedition } from '../expedition';
 import type { RunState } from '@/engine/types';
 import { initialMeta } from '@/state/meta';
+import { reportSaveIssue, reportSaveRecovery } from '@/state/saveStatus';
 import { useGameStore, waitForHydration } from '@/state/store';
 
 import { RunShell } from '../RunShell';
+import { SaveStatusNotice } from '../SaveStatusNotice';
 
 // Smoke tests for the shell screens with a mocked expo-router.
 
@@ -60,6 +63,8 @@ afterAll(() => {
 beforeEach(() => {
   for (const fn of Object.values(mockRouter)) fn.mockClear();
   mockPathname.current = '/';
+  reportSaveIssue(null);
+  reportSaveRecovery(null);
   useGameStore.setState({ hydrated: true, run: null, meta: initialMeta() });
 });
 
@@ -119,7 +124,66 @@ function confirmButton(buttons: AlertButton[] | undefined): AlertButton {
   return button;
 }
 
+describe('save recovery notice', () => {
+  it('explains a rejected expedition and dismisses without changing progress', () => {
+    const run = createRun(CONTENT, 42);
+    useGameStore.setState({ run });
+    const before = useGameStore.getState();
+    reportSaveRecovery('run');
+    const r = render(<SaveStatusNotice />);
+    expect(textOf(r.root)).toContain('Gültige Funde und Statistiken bleiben erhalten.');
+    press(r.root, 'dismiss-save-recovery');
+    expect(r.root.findAll((node) => node.props.testID === 'save-recovery-notice')).toHaveLength(0);
+    expect(useGameStore.getState()).toBe(before);
+  });
+});
+
 describe('home screen', () => {
+  it('starts the displayed daily code even when UTC midnight passes before the tap', () => {
+    jest.useFakeTimers();
+    try {
+      jest.setSystemTime(new Date('2026-10-23T23:59:59Z'));
+      const expected = dailyExpedition(new Date()).seed;
+      const r = render(<HomeScreen />);
+      press(r.root, 'home-daily');
+      // Moving the clock does not run the modal's refresh interval.
+      jest.setSystemTime(new Date('2026-10-24T00:00:01Z'));
+      press(r.root, 'expedition-code-start');
+      expect(useGameStore.getState().run?.seed).toBe(expected);
+    } finally {
+      jest.clearAllTimers();
+      jest.useRealTimers();
+    }
+  });
+
+  it('starts a daily expedition from the existing rules and opens the field guide', () => {
+    const r = render(<HomeScreen />);
+    press(r.root, 'home-guide');
+    expect(textOf(r.root)).toContain('Drei Energie. Fünf Karten.');
+    press(r.root, 'home-daily');
+    expect(textOf(r.root)).toContain('Gleiche Welt. Dein eigener Weg.');
+    press(r.root, 'expedition-code-start');
+    expect(useGameStore.getState().run?.seed).toBe(dailyExpedition(new Date()).seed);
+  });
+
+  it('validates an expedition code and protects the current run before replacing it', () => {
+    const previous = createRun(CONTENT, 17);
+    useGameStore.setState({ run: previous });
+    const alerts = spyAlerts();
+    const r = render(<HomeScreen />);
+    press(r.root, 'home-code');
+    press(r.root, 'expedition-code-start');
+    expect(textOf(r.root)).toContain('Bitte gib einen vollständigen Code');
+    expect(useGameStore.getState().run).toBe(previous);
+    const input = r.root.find((n) => n.props.testID === 'expedition-code-input' && n.props.onChangeText);
+    act(() => (input.props.onChangeText as (value: string) => void)('FF-0000002A'));
+    press(r.root, 'expedition-code-start');
+    expect(alerts).toHaveLength(1);
+    expect(useGameStore.getState().run).toBe(previous);
+    act(() => confirmButton(alerts[0]).onPress?.());
+    expect(useGameStore.getState().run?.seed).toBe(42);
+  });
+
   it('starts a first expedition without a dialog', () => {
     const r = render(<HomeScreen />);
     const shown = textOf(r.root);
@@ -127,7 +191,7 @@ describe('home screen', () => {
     expect(shown).toContain('Frenzy');
     expect(shown).toContain('Deine erste Expedition wartet!');
     expect(shown).not.toContain('Weiterspielen');
-    expect(shown).toContain(`0/${Object.keys(CONTENT.fossils).length} entdeckt`);
+    expect(shown).toContain(`${Object.keys(CONTENT.fossils).length} Steckbriefe · 0 Funde`);
 
     press(r.root, 'home-new-run');
     expect(useGameStore.getState().run?.screen.type).toBe('map');
@@ -227,6 +291,20 @@ describe('run shell', () => {
 });
 
 describe('summary screen', () => {
+  it('replays the same seed from the beginning and counts the finished victory once', () => {
+    const previous = runAt({ type: 'victory' }, { act: 3, seed: 42 });
+    useGameStore.setState({ run: previous });
+    mockPathname.current = '/run/summary';
+    const r = render(<RunShell><SummaryScreen /></RunShell>);
+    press(r.root, 'summary-replay');
+    const next = useGameStore.getState().run;
+    expect(next?.seed).toBe(42);
+    expect(next?.act).toBe(0);
+    expect(next?.map).toEqual(createRun(CONTENT, 42).map);
+    expect(useGameStore.getState().meta.runsWon).toBe(1);
+    expect(mockRouter.replace).toHaveBeenCalledWith('/run/map');
+  });
+
   it('shows the result and leaves exactly once', () => {
     const run = runAt(
       { type: 'victory' },

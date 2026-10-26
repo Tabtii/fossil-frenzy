@@ -19,8 +19,8 @@ export const ROUTES = {
   summary: '/run/summary',
 } as const;
 
-export function fossilRoute(id: string): Href {
-  return { pathname: '/fossils/[id]', params: { id } };
+export function fossilRoute(id: string, wiki = false): Href {
+  return { pathname: '/fossils/[id]', params: wiki ? { id, wiki: '1' } : { id } };
 }
 
 export function routeForScreen(screen: RunScreen): (typeof ROUTES)[keyof typeof ROUTES] {

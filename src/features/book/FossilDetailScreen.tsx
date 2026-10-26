@@ -17,6 +17,7 @@ import {
   eraColors,
   FOSSIL_KIND_LABELS,
   formatLength,
+  FossilArtwork,
   GameCard,
   Header,
   ListRow,
@@ -48,6 +49,8 @@ const GAP = spacing.sm;
 export interface FossilDetailScreenProps {
   /** Route param (may be missing or repeated in a malformed link). */
   id: string | string[] | undefined;
+  /** Public reading mode; never unlocks a fossil or a card. */
+  wiki?: boolean;
 }
 
 function SectionHeading({ children }: { children: string }) {
@@ -107,14 +110,14 @@ function EnemyRow({ def }: { def: EnemyDef }) {
   );
 }
 
-function FoundDetail({
+function ArticleDetail({
   entry,
   record,
   cardsSeen,
   sheet,
 }: {
   entry: FossilEntry;
-  record: FossilRecord;
+  record: FossilRecord | undefined;
   cardsSeen: readonly string[];
   sheet: CardSheetState;
 }) {
@@ -123,16 +126,14 @@ function FoundDetail({
   const enemies = useMemo(() => relatedEnemies(CONTENT, entry.id), [entry.id]);
   const seen = useMemo(() => new Set(cardsSeen), [cardsSeen]);
   const cardWidth = Math.min(RELATED_CARD_WIDTH, gridItemWidth(innerWidth, 3, GAP));
-  const firstFound = formatDateDe(record.discoveredAt);
+  const firstFound = record ? formatDateDe(record.discoveredAt) : null;
   const tone = eraColors[entry.era];
 
   return (
     <>
       <Surface style={[styles.hero, { borderColor: tone.main }]}>
         <View style={[styles.heroArt, { backgroundColor: tone.soft }]}>
-          <Text style={styles.heroEmoji} allowFontScaling={false} accessible={false}>
-            {entry.emoji}
-          </Text>
+          <FossilArtwork fossilId={entry.id} emoji={entry.emoji} emojiStyle={styles.heroEmoji} />
         </View>
         <AppText variant="title" align="center" accessibilityRole="header">
           {entry.name}
@@ -141,20 +142,20 @@ function FoundDetail({
           {entry.scientificName}
         </AppText>
         <View style={styles.pills}>
-          <EraBadge era={entry.era} />
+          <EraBadge era={entry.era} showIcon={false} />
           <Pill label={FOSSIL_KIND_LABELS[entry.kind]} />
         </View>
       </Surface>
 
       <Surface style={styles.info}>
-        <InfoRow label="Alter" value={formatFossilAge(entry.mya)} />
+        <InfoRow label="Lebenszeit" value={formatFossilAge(entry.mya)} />
         <InfoRow label="Ernährung" value={DIET_LABELS[entry.diet]} />
         {entry.lengthM !== undefined ? <InfoRow label="Länge" value={formatLength(entry.lengthM)} /> : null}
         <InfoRow label="Fundort" value={entry.foundIn} />
         <InfoRow
           label="Sammlung"
           value={
-            firstFound
+            !record ? 'Noch nicht auf einer Expedition gefunden' : firstFound
               ? `${timesFoundText(record.timesFound)} · zuerst am ${firstFound}`
               : timesFoundText(record.timesFound)
           }
@@ -174,6 +175,11 @@ function FoundDetail({
           </View>
         ))}
       </Surface>
+
+      {!record ? <Surface style={styles.info}>
+        <AppText variant="subheading">Im Spiel entdecken</AppText>
+        <AppText variant="body" tone="secondary">{lockedHint(CONTENT, entry)}</AppText>
+      </Surface> : null}
 
       {cards.length > 0 ? (
         <>
@@ -221,7 +227,7 @@ function LockedDetail({ entry }: { entry: FossilEntry }) {
 }
 
 /** Fossil book entry: facts and related cards/enemies, or a locked hint. */
-export function FossilDetailScreen({ id: rawId }: FossilDetailScreenProps) {
+export function FossilDetailScreen({ id: rawId, wiki = false }: FossilDetailScreenProps) {
   const hydrated = useHydrated();
   const meta = useMeta();
   const { reducedMotion } = useSettings();
@@ -233,7 +239,7 @@ export function FossilDetailScreen({ id: rawId }: FossilDetailScreenProps) {
   const entry = id !== undefined ? CONTENT.fossils[id] : undefined;
   const record = entry ? meta.fossils[entry.id] : undefined;
 
-  const title = !entry ? 'Fossilienbuch' : record ? entry.name : 'Unentdeckt';
+  const title = !entry ? 'Dino-Wiki' : record || wiki ? entry.name : 'Unentdeckt';
   const header = <Header title={title} onBack={onBack} divider />;
 
   if (!hydrated) return <Screen header={header} />;
@@ -244,7 +250,7 @@ export function FossilDetailScreen({ id: rawId }: FossilDetailScreenProps) {
         header={header}
         footer={
           <Button
-            label="Zum Fossilienbuch"
+            label="Zum Dino-Wiki"
             icon="📖"
             size="lg"
             fullWidth
@@ -258,7 +264,7 @@ export function FossilDetailScreen({ id: rawId }: FossilDetailScreenProps) {
           <EmptyState
             icon="🪨"
             title="Kein Fossil gefunden"
-            message="Diesen Eintrag gibt es im Fossilienbuch nicht. Vielleicht liegt er noch tief im Gestein verborgen."
+            message="Diesen Eintrag gibt es im Dino-Wiki nicht. Vielleicht liegt er noch tief im Gestein verborgen."
           />
         </View>
       </Screen>
@@ -270,10 +276,10 @@ export function FossilDetailScreen({ id: rawId }: FossilDetailScreenProps) {
       header={header}
       scroll
       contentStyle={styles.content}
-      testID={record ? 'fossil-detail' : 'fossil-detail-locked'}
+      testID={wiki ? 'wiki-detail' : record ? 'fossil-detail' : 'fossil-detail-locked'}
     >
-      {record ? (
-        <FoundDetail entry={entry} record={record} cardsSeen={meta.cardsSeen} sheet={sheet} />
+      {record || wiki ? (
+        <ArticleDetail entry={entry} record={record} cardsSeen={meta.cardsSeen} sheet={sheet} />
       ) : (
         <LockedDetail entry={entry} />
       )}
@@ -301,6 +307,7 @@ const styles = StyleSheet.create({
   hero: { alignItems: 'center', gap: spacing.sm, borderWidth: 1 },
   lockedHero: { borderStyle: 'dashed', borderColor: colors.borderStrong },
   heroArt: {
+    overflow: 'hidden',
     width: 128,
     height: 128,
     borderRadius: radii.xl,
@@ -308,7 +315,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: spacing.xs,
   },
-  heroEmoji: { fontSize: 72, lineHeight: 86 },
+  heroEmoji: { fontSize: 72, lineHeight: 86, color: colors.text },
   silhouette: { opacity: 0.5 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.xs },
   center: { alignSelf: 'center' },

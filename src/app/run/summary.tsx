@@ -6,6 +6,7 @@ import { CONTENT } from '@/data';
 import { eraForAct } from '@/engine/run';
 import type { CardInstance, RunState } from '@/engine/types';
 import { DeckGrid } from '@/features/shell/DeckGrid';
+import { expeditionCode } from '@/features/shell/expedition';
 import { usePressGuard, useSticky } from '@/features/shell/hooks';
 import {
   actLabel,
@@ -24,6 +25,7 @@ import {
   AppText,
   Button,
   CardDetailSheet,
+  colors,
   durations,
   EraBadge,
   Pill,
@@ -65,6 +67,14 @@ export default function SummaryScreen() {
     });
   }, [guard, startNewRun]);
 
+  const onReplay = useCallback(() => {
+    if (!run) return;
+    guard(() => {
+      haptics.selection();
+      startNewRun(run.seed);
+    });
+  }, [guard, run, startNewRun]);
+
   const onCloseDetail = useCallback(() => setDetail(null), []);
 
   if (run === null) return <Screen />;
@@ -101,6 +111,11 @@ export default function SummaryScreen() {
         </>
       }
     >
+      <View>
+        <AppText variant="overline" tone="muted" align="center">DEIN EXPEDITIONSCODE</AppText>
+        <AppText variant="number" tone="accent" align="center" selectable>{expeditionCode(run.seed)}</AppText>
+        <Button label="Diese Expedition wiederholen" variant="ghost" fullWidth onPress={onReplay} testID="summary-replay" />
+      </View>
       {headline ? (
         <View style={styles.hero}>
           <Animated.View entering={reduceMotion ? undefined : ZoomIn.duration(durations.slow)}>
@@ -181,7 +196,7 @@ export default function SummaryScreen() {
 const styles = StyleSheet.create({
   body: { gap: spacing.md, paddingTop: spacing.xl },
   hero: { alignItems: 'center', gap: spacing.sm },
-  heroIcon: { fontSize: 64, lineHeight: 78, textAlign: 'center' },
+  heroIcon: { fontSize: 64, lineHeight: 78, textAlign: 'center', color: colors.accent },
   heroTexts: { alignItems: 'center', gap: spacing.sm },
   badge: { alignSelf: 'center' },
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },

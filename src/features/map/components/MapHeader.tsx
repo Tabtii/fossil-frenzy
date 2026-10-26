@@ -53,7 +53,7 @@ export const MapHeader = memo(function MapHeader({
             >
               Akt {act + 1}
             </AppText>
-            <EraBadge era={era} size="sm" />
+            <EraBadge era={era} size="sm" showIcon={false} />
           </View>
           <AppText variant="caption" tone="secondary" numberOfLines={1}>
             {floorText}

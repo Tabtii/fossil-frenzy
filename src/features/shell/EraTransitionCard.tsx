@@ -4,7 +4,7 @@ import Animated, { FadeInLeft, FadeInRight } from 'react-native-reanimated';
 
 import { ERA_MYA, ERA_NAMES } from '@/data/fossils';
 import type { Era } from '@/engine/types';
-import { AppText, durations, eraColors, fontScale, formatMya, radii, spacing } from '@/ui';
+import { AppText, colors, durations, eraColors, fontScale, formatMya, radii, spacing } from '@/ui';
 
 import { ERA_MASCOTS } from './EraParade';
 import { timeJumpText } from './model';
@@ -103,6 +103,6 @@ const styles = StyleSheet.create({
   },
   highlighted: { borderWidth: 2 },
   dimmed: { opacity: 0.8 },
-  mascot: { fontSize: 40, lineHeight: 50 },
+  mascot: { fontSize: 40, lineHeight: 50, color: colors.text },
   arrow: { alignSelf: 'center', fontSize: 24, lineHeight: 30, fontWeight: '800' },
 });

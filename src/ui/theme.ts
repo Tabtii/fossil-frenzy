@@ -2,44 +2,54 @@ import type { TextStyle, ViewStyle } from 'react-native';
 
 import type { CardType, Era, IntentKind, Rarity, StatusId } from '@/engine/types';
 
-// Design tokens for the dark "fossil night" theme. Screens and components must
+// Design tokens for the dark "expedition journal" theme. Screens and components must
 // take every colour, spacing, radius and font size from here.
 //
-// Contrast (WCAG 2.1, checked against background/surface/surfaceRaised/surfaceHigh):
-//   text ≥ 11.9:1, textSecondary ≥ 7.7:1, textMuted ≥ 5.0:1, accent ≥ 7.2:1,
-//   danger ≥ 4.3:1 (≥ 4.9:1 up to surfaceRaised), onAccent on accent 10:1,
-//   onDangerFill on dangerFill 5.4:1, white on hpFill 5.1:1, onEnergy on energy 11.3:1.
-// textDisabled (3.8:1) is only for disabled controls, which WCAG exempts.
+// Warm paper text, fossil amber and deep forest surfaces connect menus, cards
+// and the expedition map. Semantic colours still identify combat information.
 
 // ---------------------------------------------------------------------------
 // Colours
 // ---------------------------------------------------------------------------
 
 export const colors = {
-  // Backgrounds and surfaces (deep night blue/violet, lightest last).
-  background: '#14121F',
-  backgroundDeep: '#0E0C17',
-  surface: '#1D1A2C',
-  surfaceRaised: '#26223A',
-  surfaceHigh: '#312C4A',
-  surfacePressed: '#3A3456',
-  card: '#221E33',
-  cardText: '#2A2540',
+  // Backgrounds and surfaces (forest ink, lightest last).
+  background: '#0D191A',
+  backgroundDeep: '#081213',
+  surface: '#142426',
+  surfaceRaised: '#1B2F31',
+  surfaceHigh: '#233638',
+  surfacePressed: '#2D4445',
+  card: '#182A2C',
+  cardText: '#1D3032',
+  cardPaper: '#E7D9BB',
+  cardPaperText: '#25322C',
+  cardPaperMuted: '#515B47',
+  cardPositive: '#195F3D',
+  cardNegative: '#9F2736',
+  cardFrame: '#AC8C54',
+  cardFrameDeep: '#665337',
+  cardTitle: '#163431',
+  cardEtching: 'rgba(102, 83, 55, 0.18)',
+  arenaShade: 'rgba(5, 16, 17, 0.34)',
+  arenaHud: 'rgba(8, 23, 24, 0.94)',
+  arenaRim: 'rgba(203, 169, 100, 0.55)',
 
-  border: '#3B3556',
-  borderStrong: '#544C78',
+  border: '#304749',
+  borderStrong: '#506B67',
   divider: 'rgba(255, 255, 255, 0.08)',
-  backdrop: 'rgba(7, 6, 14, 0.74)',
-  scrim: 'rgba(7, 6, 14, 0.45)',
+  backdrop: 'rgba(4, 12, 13, 0.78)',
+  scrim: 'rgba(4, 12, 13, 0.45)',
+  artCaption: 'rgba(8, 18, 19, 0.88)',
   shadow: '#000000',
   transparent: 'transparent',
 
   // Text
-  text: '#F5F2FA',
-  textSecondary: '#C9C3DB',
-  textMuted: '#A39CBA',
-  textDisabled: '#7A7393',
-  textInverse: '#14121F',
+  text: '#F2EEE4',
+  textSecondary: '#C5D2C8',
+  textMuted: '#A0B8AF',
+  textDisabled: '#78928A',
+  textInverse: '#0D191A',
   textShadow: 'rgba(0, 0, 0, 0.75)',
 
   // Brand accent: fossil amber.
@@ -54,10 +64,10 @@ export const colors = {
   success: '#4CC38A',
   successSoft: 'rgba(76, 195, 138, 0.16)',
   onSuccess: '#06170E',
-  danger: '#F2646A',
+  danger: '#FF7B80',
   dangerFill: '#C2353C',
   dangerPressed: '#A82D33',
-  dangerSoft: 'rgba(242, 100, 106, 0.16)',
+  dangerSoft: 'rgba(255, 123, 128, 0.16)',
   onDangerFill: '#FFFFFF',
   warning: '#F5A524',
   info: '#5FA8F5',
@@ -74,7 +84,7 @@ export const colors = {
   onBlock: '#0F1A26',
   energy: '#FFD23F',
   energyDeep: '#C98F00',
-  energyEmpty: '#4A4260',
+  energyEmpty: '#3D5551',
   onEnergy: '#2A1E00',
   heal: '#4CC38A',
 } as const;
@@ -107,8 +117,8 @@ export const cardTypeColors: Record<CardType, ToneColors> = {
 
 /** Card rarity colours (card border). */
 export const rarityColors: Record<Rarity, string> = {
-  starter: '#968FAE',
-  common: '#B5AFC8',
+  starter: '#91AAA1',
+  common: '#B8C9BF',
   uncommon: '#4DC3D6',
   rare: '#F2B544',
 };

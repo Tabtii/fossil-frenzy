@@ -14,6 +14,9 @@ import { battleTimings } from '../timing';
 
 // Integration test: the real store, engine and content with the battle screen.
 
+jest.mock('expo-router', () => ({ router: { dismissTo: jest.fn() } }));
+const { router: mockRouter } = jest.requireMock<{ router: { dismissTo: jest.Mock } }>('expo-router');
+
 const METRICS = {
   frame: { x: 0, y: 0, width: 360, height: 780 },
   insets: { top: 24, left: 0, right: 0, bottom: 16 },
@@ -101,6 +104,7 @@ function modalVisible(root: ReactTestInstance, testID: string): boolean {
 }
 
 beforeEach(async () => {
+  mockRouter.dismissTo.mockClear();
   await waitForHydration();
   useGameStore.setState({ run: null, meta: initialMeta(), hydrated: true });
   jest.useFakeTimers();
@@ -116,6 +120,23 @@ afterEach(() => {
 });
 
 describe('BattleScreen', () => {
+  it('pauses, explains the rules and returns to camp without restarting the battle', () => {
+    startCombat();
+    const before = useGameStore.getState().run;
+    const { root } = render();
+    act(() => pressable(root, 'battle-menu').props.onPress());
+    expect(modalVisible(root, 'battle-pause-sheet')).toBe(true);
+    act(() => pressable(root, 'battle-pause-rules').props.onPress());
+    expect(allText(root)).toContain('Drei Energie. Fünf Karten.');
+    act(() => pressable(root, 'battle-pause-continue').props.onPress());
+    expect(modalVisible(root, 'battle-pause-sheet')).toBe(false);
+    expect(useGameStore.getState().run).toBe(before);
+    act(() => pressable(root, 'battle-menu').props.onPress());
+    act(() => pressable(root, 'battle-pause-home').props.onPress());
+    expect(mockRouter.dismissTo).toHaveBeenCalledWith('/');
+    expect(useGameStore.getState().run).toBe(before);
+  });
+
   it('renders the arena, the hand and the piles with accessible labels', () => {
     startCombat();
     const { root } = render();

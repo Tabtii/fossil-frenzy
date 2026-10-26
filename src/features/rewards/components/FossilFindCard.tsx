@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
   },
   rootNew: { backgroundColor: colors.surfaceRaised, borderColor: colors.accentBorder },
-  emoji: { fontSize: 40, lineHeight: 48 },
+  emoji: { fontSize: 40, lineHeight: 48, color: colors.text },
   text: { flex: 1, minWidth: 0, gap: spacing.xxs },
   pill: { marginTop: spacing.xxs },
 });

@@ -262,18 +262,18 @@ export interface FossilFind {
 }
 
 /**
- * Fossils this run is known to have found: every card in the final deck plus
- * the enemies defeated on the current act's map. Earlier acts' enemies cannot
- * be derived (the map is replaced per act), so the list may be incomplete but
- * never contains a fossil the run did not find. `isNew` marks fossils whose
- * only find ever is this one (timesFound === 1).
+ * Every first discovery tracked by this expedition, plus the deck and enemies
+ * defeated on the current map. First discoveries survive repeat finds and act
+ * changes. Legacy runs without a discovery list retain the count-based fallback;
+ * their earlier acts' enemies cannot be reconstructed from the replaced map.
  */
 export function runFossilFinds(
   db: ContentDB,
   run: RunState,
   records: Readonly<Record<string, FossilRecord>>,
 ): FossilFind[] {
-  const ids = new Set<string>();
+  const newIds = run.newFossils === undefined ? null : new Set(run.newFossils);
+  const ids = new Set<string>(run.newFossils ?? []);
   for (const card of run.deck) {
     const def = db.cards[card.defId];
     if (def) ids.add(def.fossilId);
@@ -291,7 +291,7 @@ export function runFossilFinds(
   const finds: FossilFind[] = [];
   for (const id of ids) {
     const entry = db.fossils[id];
-    if (entry) finds.push({ entry, isNew: records[id]?.timesFound === 1 });
+    if (entry) finds.push({ entry, isNew: newIds === null ? records[id]?.timesFound === 1 : newIds.has(id) });
   }
   // New finds first, then oldest era first; stable otherwise.
   return finds

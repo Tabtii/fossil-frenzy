@@ -1,7 +1,7 @@
 import { memo, useCallback } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { AppText, colors, EraBadge, eraColors, fontScale, opacity, radii, spacing } from '@/ui';
+import { AppText, colors, EraBadge, eraColors, fontScale, FossilArtwork, opacity, radii, spacing } from '@/ui';
 
 import { type FossilTile as FossilTileModel, fossilTileAccessibilityLabel } from '../model';
 
@@ -17,6 +17,7 @@ const NEW_DOT = 10;
 export const FossilTile = memo(function FossilTile({ tile, width, onOpen }: FossilTileProps) {
   const onPress = useCallback(() => onOpen(tile.id), [onOpen, tile.id]);
   const tone = eraColors[tile.era];
+  const artWidth = Math.max(1, width - spacing.sm * 2 - 2);
   return (
     <Pressable
       accessibilityRole="button"
@@ -34,9 +35,7 @@ export const FossilTile = memo(function FossilTile({ tile, width, onOpen }: Foss
       ]}
     >
       <View style={[styles.art, { backgroundColor: tone.soft }]}>
-        <Text style={[styles.emoji, !tile.discovered && styles.silhouette]} allowFontScaling={false} accessible={false}>
-          {tile.discovered ? tile.emoji : '❓'}
-        </Text>
+        <FossilArtwork fossilId={tile.discovered ? tile.id : undefined} emoji={tile.discovered ? tile.emoji : '❓'} emojiStyle={[styles.emoji, !tile.discovered && styles.silhouette]} frame={{ width: artWidth, height: artWidth / 1.4 }} />
         {tile.discovered && tile.isNew ? <View style={styles.newDot} /> : null}
       </View>
       <AppText
@@ -70,13 +69,14 @@ const styles = StyleSheet.create({
   locked: { backgroundColor: colors.backgroundDeep, borderStyle: 'dashed' },
   pressed: { opacity: opacity.pressed, transform: [{ scale: 0.97 }] },
   art: {
+    overflow: 'hidden',
     alignSelf: 'stretch',
     aspectRatio: 1.4,
     borderRadius: radii.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emoji: { fontSize: 34, lineHeight: 42 },
+  emoji: { fontSize: 34, lineHeight: 42, color: colors.text },
   silhouette: { opacity: opacity.disabled },
   newDot: {
     position: 'absolute',

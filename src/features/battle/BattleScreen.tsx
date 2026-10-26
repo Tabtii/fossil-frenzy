@@ -5,8 +5,10 @@ import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { CONTENT } from '@/data';
 import { STATUS_INFO } from '@/engine/describe';
 import { getIntent } from '@/engine/combat';
+import { eraForAct } from '@/engine/run';
 import type { CardInstance, CombatState, StatusId } from '@/engine/types';
 import * as haptics from '@/lib/haptics';
+import { useLeaveRun } from '@/features/shell/RunShell';
 import { useCurrentNode, useHydrated, useSettings } from '@/state/selectors';
 import { useGameStore } from '@/state/store';
 import type { GameStore } from '@/state/types';
@@ -24,8 +26,10 @@ import {
 
 import { enemyEmojiSize, HAND_TOP_SPACE, handCardWidthFor, isCompactArena, previewCardWidth } from './battleLayout';
 import { BattleBottomBar } from './components/BattleBottomBar';
+import { BattleBackdrop } from './components/BattleBackdrop';
 import { BattleCardDetail } from './components/BattleCardDetail';
 import { BattleTopBar } from './components/BattleTopBar';
+import { BattlePauseSheet } from './components/BattlePauseSheet';
 import { CardFlight } from './components/CardFlight';
 import { CardPreview } from './components/CardPreview';
 import { EnemyInfoSheet } from './components/EnemyInfoSheet';
@@ -112,6 +116,7 @@ const CombatView = memo(function CombatView({ combat, frozen }: { combat: Combat
   const reduce = useReduceMotion(settings.reducedMotion);
   const enemyDef = CONTENT.enemies[combat.enemy.defId];
   const controller = useBattleController({ combat, frozen, enemyDef, reduceMotion: reduce });
+  const leaveRun = useLeaveRun();
   const { selectCard, tryPlay, deselect, showHint } = controller;
 
   const act = useGameStore(selectAct);
@@ -139,6 +144,7 @@ const CombatView = memo(function CombatView({ combat, frozen }: { combat: Combat
   const [detailUid, setDetailUid] = useState<string | null>(null);
   const [enemySheet, setEnemySheet] = useState(false);
   const [openPile, setOpenPile] = useState<PileId | null>(null);
+  const [pauseOpen, setPauseOpen] = useState(false);
   const detailEntry = findHandEntry(entries, detailUid);
 
   const onDetails = useCallback((uid: string) => {
@@ -176,6 +182,17 @@ const CombatView = memo(function CombatView({ combat, frozen }: { combat: Combat
   const onStatusPress = useCallback((status: StatusId) => showHint(statusHint(status), 'info', true), [showHint]);
 
   const { stage, locked, timings } = controller;
+  const openPause = useCallback(() => {
+    if (locked) return;
+    deselect();
+    haptics.tapLight();
+    setPauseOpen(true);
+  }, [locked, deselect]);
+  const closePause = useCallback(() => setPauseOpen(false), []);
+  const leavePausedRun = useCallback(() => {
+    setPauseOpen(false);
+    leaveRun();
+  }, [leaveRun]);
   const phase = combat.phase;
   const outcome = phase === 'won' ? 'victory' : phase === 'lost' ? 'defeat' : null;
   const gutter = layout.gutter;
@@ -197,6 +214,7 @@ const CombatView = memo(function CombatView({ combat, frozen }: { combat: Combat
   return (
     <View style={styles.root}>
       <StatusBar style="light" />
+      <BattleBackdrop era={eraForAct(act)} />
       <View
         style={frameStyle}
         // Tap outside the cards and controls deselects the lifted card.
@@ -204,7 +222,7 @@ const CombatView = memo(function CombatView({ combat, frozen }: { combat: Combat
         onResponderRelease={deselect}
       >
         <View style={styles.column}>
-          <View style={gutterStyle}>
+          <View style={[styles.topPanel, gutterStyle]}>
             <BattleTopBar
               act={act}
               floor={node?.floor ?? null}
@@ -212,6 +230,8 @@ const CombatView = memo(function CombatView({ combat, frozen }: { combat: Combat
               counts={counts}
               compact={layout.isCompact}
               onOpenPile={onOpenPile}
+              onPause={openPause}
+              pauseDisabled={locked}
             />
           </View>
 
@@ -310,6 +330,7 @@ const CombatView = memo(function CombatView({ combat, frozen }: { combat: Combat
         <OutcomeOverlay outcome={outcome} enemyName={enemyName} delay={timings.outcomeDelay} reduce={reduce} />
       ) : null}
 
+      <BattlePauseSheet visible={pauseOpen && outcome === null} act={act} floor={node?.floor ?? null} onClose={closePause} onLeave={leavePausedRun} reducedMotion={settings.reducedMotion} />
       <EnemyInfoSheet
         visible={enemySheet}
         onClose={closeEnemySheet}
@@ -341,6 +362,7 @@ const styles = StyleSheet.create({
   frame: { flex: 1 },
   column: { flex: 1, width: '100%', maxWidth: MAX_CONTENT_WIDTH, alignSelf: 'center' },
   arena: { flex: 1, zIndex: zIndex.base },
+  topPanel: { backgroundColor: colors.arenaHud, borderBottomWidth: 1, borderBottomColor: colors.arenaRim },
   overlaySlot: {
     position: 'absolute',
     left: 0,
