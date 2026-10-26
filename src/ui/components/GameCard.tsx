@@ -379,7 +379,7 @@ export const GameCard = memo(function GameCard({
       </View>
 
       {spec.eraBadge ? (
-        <EraBadge era={def.era} size="sm" style={s.eraBadge} />
+        <EraBadge era={def.era} size="sm" variant="solid" showIcon={false} style={s.eraBadge} />
       ) : (
         <View style={[s.eraDot, { backgroundColor: eraColors[def.era].main }]} />
       )}

@@ -22,6 +22,8 @@ dein Fossilienbuch mit echten paläontologischen Fakten.
 - **Deckanalyse** mit Energiekurve, tatsächlichen Verbesserungskosten,
   Kartentypen, Kartengruppen und zusammengefassten Duplikaten; direkt bei
   Belohnungen und Ausgrabungen aufrufbar, ohne die Auswahl zu verlieren
+- **Decksuche** nach Name, tatsächlichem Effekt, Energie oder Kartengruppe;
+  „verbessert“ zeigt die verbesserten Karten deiner laufenden Expedition
 - **Archivsuche** nach entdeckten Karten/Effekten bzw. Fossilien/Fundorten
 - **Expeditionshandbuch** erklärt Kampf, Deckbau und Fortschritt direkt im Lager
 - **Kampfmenü** über „Akt … ⋮“: Regeln nachschlagen, weiterspielen oder den

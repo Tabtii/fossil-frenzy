@@ -5,9 +5,10 @@ import { CONTENT } from '@/data';
 import type { CardInstance, CardTag, FossilRecord } from '@/engine/types';
 import { summarizePile, type PileEntry } from '@/features/battle/piles';
 import { expeditionCode } from '@/features/shell/expedition';
-import { AppText, BottomSheet, CardDetailSheet, CARD_TAG_LABELS, colors, GAME_CARD_WIDTH, GameCard, Pill, radii, spacing } from '@/ui';
+import { AppText, BottomSheet, CardDetailSheet, CARD_TAG_LABELS, colors, EmptyState, GAME_CARD_WIDTH, GameCard, Pill, radii, SearchField, spacing } from '@/ui';
 
 import { analyzeDeck } from '../deckAnalysis';
+import { searchDeckGroups } from '../deckSearch';
 
 export interface DeckSheetProps {
   visible: boolean;
@@ -36,6 +37,7 @@ const DeckCard = memo(function DeckCard({
         width={GAME_CARD_WIDTH.mini}
         onPress={onPress}
         accessibilityHint="Öffnet die Kartendetails."
+        testID={`deck-card-${card.key}`}
       />
       <AppText variant="caption" tone="secondary" align="center">{card.count}× im Deck</AppText>
     </View>
@@ -48,13 +50,17 @@ const DeckCard = memo(function DeckCard({
  */
 export const DeckSheet = memo(function DeckSheet({ visible, deck, fossils, onClose, reducedMotion, seed, testID = 'map-deck-sheet' }: DeckSheetProps) {
   const [detail, setDetail] = useState<PileEntry | null>(null);
+  const [query, setQuery] = useState('');
   const closeDetail = useCallback(() => setDetail(null), []);
   const handleClose = useCallback(() => {
     setDetail(null);
+    setQuery('');
     onClose();
   }, [onClose]);
   const analysis = useMemo(() => analyzeDeck(CONTENT, deck), [deck]);
   const groups = useMemo(() => summarizePile(deck, CONTENT), [deck]);
+  const matches = useMemo(() => searchDeckGroups(groups, query), [groups, query]);
+  const matchingCards = matches.reduce((sum, card) => sum + card.count, 0);
   const tags = useMemo(() => (Object.entries(analysis.tags) as [CardTag, number][]).sort((a, b) => b[1] - a[1]), [analysis.tags]);
   const def = detail?.def ?? null;
 
@@ -65,6 +71,7 @@ export const DeckSheet = memo(function DeckSheet({ visible, deck, fossils, onClo
         onClose={handleClose}
         title={`Dein Deck (${deck.length} Karten)`}
         reducedMotion={reducedMotion}
+        avoidKeyboard
         testID={testID}
       >
         {seed !== undefined ? (
@@ -107,14 +114,17 @@ export const DeckSheet = memo(function DeckSheet({ visible, deck, fossils, onClo
             </>
           ) : null}
         </View>
-        <AppText variant="caption" tone="secondary">
-          Gleiche Karten sind zusammengefasst. Tippe auf eine Karte für Details.
+        <SearchField value={query} onChangeText={setQuery} placeholder="Im Deck suchen: Name, Effekt, Gruppe" testID="deck-search" />
+        <AppText variant="caption" tone="secondary" accessibilityLiveRegion="polite" testID="deck-search-count">
+          {query.trim()
+            ? `${matchingCards} von ${deck.length} Karten. Die Analyse zeigt weiterhin dein gesamtes Deck.`
+            : 'Gleiche Karten sind zusammengefasst. Tippe auf eine Karte für Details.'}
         </AppText>
-        <View style={styles.grid}>
-          {groups.map((card) => (
+        {matches.length > 0 ? <View style={styles.grid}>
+          {matches.map((card) => (
             <DeckCard key={card.key} card={card} onOpen={setDetail} />
           ))}
-        </View>
+        </View> : <EmptyState icon="🃏" title="Keine passenden Karten" message="Suche nach einem Namen, Effekt, einer Kartengruppe oder z. B. „verbessert“." actionLabel="Suche löschen" onAction={() => setQuery('')} />}
       </BottomSheet>
       <CardDetailSheet
         def={visible ? def : null}
