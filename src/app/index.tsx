@@ -152,8 +152,8 @@ export default function HomeScreen() {
       <View style={stackTiles ? styles.tilesStacked : styles.tiles}>
         <MenuTile
           icon="📖"
-          title="Fossilienbuch"
-          caption={progressText(fossils, 'entdeckt')}
+          title="Dino-Wiki"
+          caption={`${fossils.total} Steckbriefe · ${fossils.found} Funde`}
           onPress={onFossils}
           vertical={!stackTiles}
           style={stackTiles ? styles.tileStacked : undefined}

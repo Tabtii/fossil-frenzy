@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   },
   boss: { borderWidth: 3 },
   pressed: { transform: [{ scale: 0.94 }] },
-  icon: { textAlign: 'center' },
+  icon: { textAlign: 'center', color: colors.text },
   ring: { position: 'absolute', borderWidth: 3, borderColor: colors.accent },
   ringStatic: { opacity: 0.7, transform: [{ scale: 1.18 }] },
   badge: {

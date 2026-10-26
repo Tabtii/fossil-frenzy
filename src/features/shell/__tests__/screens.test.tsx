@@ -191,7 +191,7 @@ describe('home screen', () => {
     expect(shown).toContain('Frenzy');
     expect(shown).toContain('Deine erste Expedition wartet!');
     expect(shown).not.toContain('Weiterspielen');
-    expect(shown).toContain(`0/${Object.keys(CONTENT.fossils).length} entdeckt`);
+    expect(shown).toContain(`${Object.keys(CONTENT.fossils).length} Steckbriefe · 0 Funde`);
 
     press(r.root, 'home-new-run');
     expect(useGameStore.getState().run?.screen.type).toBe('map');

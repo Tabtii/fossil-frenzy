@@ -11,7 +11,10 @@ dein Fossilienbuch mit echten paläontologischen Fakten.
 - **Kampf** mit Energie, Block, Statuseffekten (Stärke, Verwundbar, Geschwächt,
   Blutung, Verwirrt) und angekündigten Gegnerabsichten
 - **43 Karten, 28 Gegner, 50 Fossilien** — Kartentexte werden aus den Regeln erzeugt
-- **Fossilienbuch & Sammlung** mit geprüften Fakten (Alter, Fundort, Ernährung, „Wusstest du?“)
+- **Dino-Wiki** mit 50 jederzeit lesbaren Steckbriefen: Lebenszeit, Größe, Ernährung,
+  Fundorte und Fakten; Suche auch im Wissenstext, Filter nach Zeitalter und Lebewesen
+- **Meine Funde & Kartensammlung** behalten den erspielten Fortschritt separat;
+  Wiki-Lesen schaltet keine Fossilien oder Karten frei
 - **Mobile First**: Hochformat, Daumenzone, Safe Areas, 320–430 dp, Haptik,
   reduzierte Bewegung, Screenreader-Labels
 - Spielstand wird automatisch gespeichert (Expedition fortsetzen jederzeit möglich)

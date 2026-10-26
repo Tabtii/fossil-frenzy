@@ -93,6 +93,7 @@ const TOTAL_FOSSILS = Object.keys(CONTENT.fossils).length;
 describe('fossil book', () => {
   it('shows an empty state before the first find', () => {
     const r = render(<FossilBookScreen />);
+    press(r.root, 'fossil-book-mode-finds');
     const shown = textOf(r.root);
     expect(shown).toContain(`0 von ${TOTAL_FOSSILS} entdeckt`);
     expect(shown).toContain('Noch nichts entdeckt');
@@ -101,6 +102,7 @@ describe('fossil book', () => {
   it('shows discovered tiles, hides undiscovered names and opens entries', () => {
     discover(['eoraptor']);
     const r = render(<FossilBookScreen />);
+    press(r.root, 'fossil-book-mode-finds');
     const shown = textOf(r.root);
     expect(shown).toContain('Eoraptor');
     expect(shown).toContain('Unentdeckt');
@@ -113,13 +115,51 @@ describe('fossil book', () => {
   it('filters by era', () => {
     discover(['eoraptor']);
     const r = render(<FossilBookScreen />);
+    press(r.root, 'fossil-book-mode-finds');
     press(r.root, 'fossil-book-filter-jura');
     expect(textOf(r.root)).toContain('Noch nichts entdeckt');
     expect(textOf(r.root)).toContain('im Jura');
   });
+
+  it('opens all wiki entries before any find without earning discoveries', () => {
+    const before = useGameStore.getState().meta;
+    const r = render(<FossilBookScreen />);
+    expect(textOf(r.root)).toContain('Die Urzeit zum Nachschlagen');
+    expect(textOf(r.root)).toContain('Eoraptor');
+    expect(textOf(r.root)).not.toContain('Noch nichts entdeckt');
+    press(r.root, 'wiki-tile-eoraptor');
+    expect(mockRouter.push).toHaveBeenCalledWith({ pathname: '/fossils/[id]', params: { id: 'eoraptor', wiki: '1' } });
+    expect(useGameStore.getState().meta).toBe(before);
+  });
+
+  it('combines wiki filters and restores a useful view from empty results', () => {
+    const r = render(<FossilBookScreen />);
+    press(r.root, 'wiki-kind-filter-mammal');
+    press(r.root, 'fossil-book-filter-trias');
+    expect(textOf(r.root)).toContain('Keine passenden Steckbriefe');
+    const reset = r.root.find((n) => n.props.label === 'Filter zurücksetzen' && n.props.onPress);
+    act(() => (reset.props.onPress as () => void)());
+    expect(textOf(r.root)).toContain('Eoraptor');
+    expect(textOf(r.root)).not.toContain('Keine passenden Steckbriefe');
+    press(r.root, 'fossil-book-mode-finds');
+    expect(textOf(r.root)).toContain('Noch nichts entdeckt');
+  });
 });
 
 describe('fossil detail', () => {
+  it('lets a wiki reader learn and see find hints without unlocking fossils or cards', () => {
+    const before = useGameStore.getState().meta;
+    const r = render(<FossilDetailScreen id="eoraptor" wiki />);
+    const shown = textOf(r.root);
+    expect(shown).toContain(CONTENT.fossils.eoraptor!.scientificName);
+    expect(shown).toContain(CONTENT.fossils.eoraptor!.facts[0]!);
+    expect(shown).toContain('Noch nicht auf einer Expedition gefunden');
+    expect(shown).toContain('Akt 1');
+    expect(r.root.findAll((n) => n.props.testID === 'related-card-eoraptor')).toHaveLength(0);
+    expect(r.root.findAll((n) => n.props.testID === 'related-locked-eoraptor').length).toBeGreaterThan(0);
+    expect(useGameStore.getState().meta).toBe(before);
+  });
+
   it('shows facts, find count and the related card', () => {
     discover(['eoraptor']);
     const r = render(<FossilDetailScreen id="eoraptor" />);
