@@ -169,13 +169,13 @@ export const EnemyZone = memo(function EnemyZone({
   const name = def?.name ?? BATTLE_TEXT.unknownEnemy;
   const tierLabel = def?.tier === 'boss' ? BATTLE_TEXT.boss : def?.tier === 'elite' ? BATTLE_TEXT.elite : null;
   const sized = useMemo(() => {
-    const box = Math.round(emojiSize * 1.45);
+    const box = Math.round(emojiSize * (compact ? 1.65 : 2.1));
     return {
-      box: { width: box, height: Math.round(emojiSize * 1.3) },
+      box: { width: box, height: box },
       glow: { width: box, height: box, borderRadius: box / 2 },
       emoji: { fontSize: emojiSize, lineHeight: Math.round(emojiSize * 1.2) },
     };
-  }, [emojiSize]);
+  }, [emojiSize, compact]);
 
   return (
     <View style={[styles.root, compact && styles.rootCompact]} pointerEvents="box-none">
@@ -193,6 +193,7 @@ export const EnemyZone = memo(function EnemyZone({
         style={({ pressed }) => [styles.target, targeting && styles.targeting, pressed && styles.pressed]}
         testID="enemy-target"
       >
+        {tierLabel ? <View style={styles.tierMark}><Pill label={tierLabel} size="sm" tone={def?.tier === 'boss' ? 'danger' : 'accent'} /></View> : null}
         <View style={[styles.emojiBox, sized.box]}>
           <Animated.View style={[styles.glow, sized.glow, glowStyle]} pointerEvents="none" />
           <Animated.View style={[emojiStyle, hasFossilArtwork(def?.fossilId) && [sized.box, styles.artwork]]}>
@@ -204,7 +205,6 @@ export const EnemyZone = memo(function EnemyZone({
           <AppText variant="subheading" numberOfLines={1} style={styles.name}>
             {name}
           </AppText>
-          {tierLabel ? <Pill label={tierLabel} size="sm" tone={def?.tier === 'boss' ? 'danger' : 'accent'} /> : null}
         </View>
       </Pressable>
       <StatBar
@@ -234,16 +234,18 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xs,
     borderRadius: radii.xl,
     borderWidth: 2,
-    borderColor: colors.transparent,
+    borderColor: colors.arenaRim,
+    backgroundColor: colors.arenaHud,
     maxWidth: '100%',
   },
-  targeting: { borderColor: colors.accentBorder, borderStyle: 'dashed', backgroundColor: colors.accentSoft },
+  targeting: { borderColor: colors.focus, borderStyle: 'solid', backgroundColor: colors.cardTitle },
   pressed: { backgroundColor: colors.surfaceRaised },
   emojiBox: { alignItems: 'center', justifyContent: 'center' },
-  artwork: { borderRadius: radii.lg, overflow: 'hidden' },
+  artwork: { borderTopLeftRadius: radii.md, borderTopRightRadius: radii.md, overflow: 'hidden', borderWidth: 1, borderColor: colors.cardFrameDeep },
+  tierMark: { position: 'absolute', top: -spacing.sm, right: spacing.sm, zIndex: 1 },
   glow: { position: 'absolute', backgroundColor: colors.dangerSoft, borderWidth: 2, borderColor: colors.danger },
   emoji: { textAlign: 'center', color: colors.text },
-  nameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, maxWidth: '100%' },
+  nameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, maxWidth: '100%', paddingVertical: spacing.xs },
   name: { flexShrink: 1 },
   bar: { width: '82%', maxWidth: 360 },
   // Reserved height, so the layout does not jump when the first status appears.

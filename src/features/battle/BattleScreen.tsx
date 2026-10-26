@@ -5,6 +5,7 @@ import { type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import { CONTENT } from '@/data';
 import { STATUS_INFO } from '@/engine/describe';
 import { getIntent } from '@/engine/combat';
+import { eraForAct } from '@/engine/run';
 import type { CardInstance, CombatState, StatusId } from '@/engine/types';
 import * as haptics from '@/lib/haptics';
 import { useLeaveRun } from '@/features/shell/RunShell';
@@ -25,6 +26,7 @@ import {
 
 import { enemyEmojiSize, HAND_TOP_SPACE, handCardWidthFor, isCompactArena, previewCardWidth } from './battleLayout';
 import { BattleBottomBar } from './components/BattleBottomBar';
+import { BattleBackdrop } from './components/BattleBackdrop';
 import { BattleCardDetail } from './components/BattleCardDetail';
 import { BattleTopBar } from './components/BattleTopBar';
 import { BattlePauseSheet } from './components/BattlePauseSheet';
@@ -212,6 +214,7 @@ const CombatView = memo(function CombatView({ combat, frozen }: { combat: Combat
   return (
     <View style={styles.root}>
       <StatusBar style="light" />
+      <BattleBackdrop era={eraForAct(act)} />
       <View
         style={frameStyle}
         // Tap outside the cards and controls deselects the lifted card.
@@ -219,7 +222,7 @@ const CombatView = memo(function CombatView({ combat, frozen }: { combat: Combat
         onResponderRelease={deselect}
       >
         <View style={styles.column}>
-          <View style={gutterStyle}>
+          <View style={[styles.topPanel, gutterStyle]}>
             <BattleTopBar
               act={act}
               floor={node?.floor ?? null}
@@ -359,6 +362,7 @@ const styles = StyleSheet.create({
   frame: { flex: 1 },
   column: { flex: 1, width: '100%', maxWidth: MAX_CONTENT_WIDTH, alignSelf: 'center' },
   arena: { flex: 1, zIndex: zIndex.base },
+  topPanel: { backgroundColor: colors.arenaHud, borderBottomWidth: 1, borderBottomColor: colors.arenaRim },
   overlaySlot: {
     position: 'absolute',
     left: 0,

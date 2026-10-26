@@ -72,7 +72,7 @@ export const BattleBottomBar = memo(function BattleBottomBar({
 });
 
 const styles = StyleSheet.create({
-  root: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingTop: spacing.sm },
+  root: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingTop: spacing.sm, backgroundColor: colors.arenaHud, borderTopWidth: 1, borderTopColor: colors.arenaRim },
   stacked: { flexDirection: 'column', alignItems: 'stretch' },
   left: { flex: 1, minWidth: 0, minHeight: 48, justifyContent: 'center' },
   leftStacked: { flex: 0 },

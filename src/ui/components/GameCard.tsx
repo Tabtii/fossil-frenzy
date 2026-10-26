@@ -94,7 +94,7 @@ const SPECS: Record<GameCardSize, SizeSpec> = {
     border: 2,
     radius: 10,
     pad: 4,
-    artRatio: 0.3,
+    artRatio: 0.4,
     emoji: 28,
     gem: 22,
     cost: 13,
@@ -111,11 +111,11 @@ const SPECS: Record<GameCardSize, SizeSpec> = {
     border: 3,
     radius: 18,
     pad: 12,
-    artRatio: 0.34,
+    artRatio: 0.43,
     emoji: 72,
     gem: 44,
     cost: 24,
-    name: 20,
+    name: 18,
     text: 15,
     nameLines: 2,
     textLines: 8,
@@ -152,7 +152,7 @@ function buildMetrics(size: GameCardSize, width: number) {
         height,
         borderRadius: radius,
         borderWidth: spec.border,
-        backgroundColor: colors.card,
+        backgroundColor: colors.cardPaper,
       },
       art: {
         overflow: 'hidden',
@@ -161,6 +161,8 @@ function buildMetrics(size: GameCardSize, width: number) {
         justifyContent: 'center',
         borderTopLeftRadius: innerRadius,
         borderTopRightRadius: innerRadius,
+        borderBottomWidth: Math.max(1, round1(2 * k)),
+        borderBottomColor: colors.cardFrame,
       },
       emoji: { fontSize: round1(spec.emoji * k), lineHeight: Math.round(spec.emoji * k * 1.2), textAlign: 'center', color: colors.text },
       gem: {
@@ -171,7 +173,7 @@ function buildMetrics(size: GameCardSize, width: number) {
         height: gem,
         borderRadius: gem / 2,
         borderWidth: Math.max(1, round1(1.5 * k)),
-        borderColor: colors.energyDeep,
+        borderColor: colors.cardFrameDeep,
         backgroundColor: colors.energy,
         alignItems: 'center',
         justifyContent: 'center',
@@ -205,7 +207,20 @@ function buildMetrics(size: GameCardSize, width: number) {
         borderWidth: 1,
       },
       previewText: { fontSize: round1(Math.max(spec.text, 9) * k), fontWeight: '900', fontVariant: ['tabular-nums'] },
-      nameRow: { paddingHorizontal: pad, paddingTop: round1(pad * 0.75) },
+      innerFrame: {
+        ...StyleSheet.absoluteFill,
+        margin: Math.max(2, round1(3 * k)),
+        borderWidth: Math.max(0.5, round1(0.8 * k)),
+        borderColor: colors.cardFrame,
+        borderRadius: Math.max(0, radius - 3),
+      },
+      nameRow: {
+        paddingHorizontal: pad,
+        paddingVertical: round1(pad * 0.5),
+        backgroundColor: colors.cardTitle,
+        borderBottomWidth: Math.max(1, round1(1.5 * k)),
+        borderBottomColor: colors.cardFrameDeep,
+      },
       name: {
         color: colors.text,
         fontSize: nameSize,
@@ -214,14 +229,14 @@ function buildMetrics(size: GameCardSize, width: number) {
         textAlign: 'center',
       },
       rule: {
-        height: Math.max(1.5, round1(2 * k)),
+        height: Math.max(2, round1(3 * k)),
         marginHorizontal: pad * 2,
         marginTop: round1(pad * 0.6),
         borderRadius: 2,
       },
       textBox: { flex: 1, paddingHorizontal: pad, paddingVertical: round1(pad * 0.75), justifyContent: 'center' },
       text: {
-        color: colors.text,
+        color: colors.cardPaperText,
         fontSize: textSize,
         lineHeight: Math.round(textSize * 1.3),
         textAlign: 'center',
@@ -234,7 +249,7 @@ function buildMetrics(size: GameCardSize, width: number) {
         paddingHorizontal: pad,
         paddingBottom: round1(pad * 0.75),
       },
-      footerText: { color: colors.textMuted, fontSize: round1(11 * k * 0.9), fontWeight: '700' },
+      footerText: { color: colors.cardPaperMuted, fontSize: round1(11 * k * 0.9), fontWeight: '700' },
     }),
   };
 }
@@ -256,8 +271,9 @@ function getMetrics(size: GameCardSize, width: number): CardMetrics {
   return metrics;
 }
 
-function trendColor(preview: DamagePreview): string {
+function trendColor(preview: DamagePreview, onPaper = false): string {
   const trend = previewTrend(preview);
+  if (onPaper) return trend > 0 ? colors.cardPositive : trend < 0 ? colors.cardNegative : colors.cardPaperText;
   return trend > 0 ? colors.success : trend < 0 ? colors.danger : colors.text;
 }
 
@@ -300,7 +316,7 @@ function RulesText({
     maxFontSizeMultiplier: spec.maxFontScale,
   } as const;
   if (preview.mode === 'inline') {
-    const color = trendColor(preview);
+    const color = trendColor(preview, true);
     return (
       <Text {...common}>
         {preview.before}
@@ -409,7 +425,7 @@ export const GameCard = memo(function GameCard({
             {CARD_TYPE_ICONS[def.type]} {view.typeLabel}
           </Text>
           <Text
-            style={[s.footerText, { color: rarityColors[def.rarity] }]}
+            style={s.footerText}
             maxFontSizeMultiplier={spec.maxFontScale}
             numberOfLines={1}
           >
@@ -417,6 +433,7 @@ export const GameCard = memo(function GameCard({
           </Text>
         </View>
       ) : null}
+      <View style={s.innerFrame} pointerEvents="none" />
     </>
   );
 
